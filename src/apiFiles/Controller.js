@@ -1,6 +1,7 @@
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const pool = require('./db');
+const { useFormState } = require('react-dom');
 
 // User Registration
 const registerUser  = async (req, res) => {
@@ -22,6 +23,44 @@ const loginUser  = async (req, res) => {
     }
 };
 
+const getUser = async (req, res) => {
+    try {
+        const user = await pool.query(
+            'SELECT id, username, email, role FROM users WHERE id = $1',
+            [req.user.id]
+        );
+        res.json(user.rows[0]);
+    } catch (error) {
+        res.status(500).json({ message: 'Error obteniendo usuario', error });
+    }
+};
+
+const updateUser = async (req, res) => {
+    const { username, email, role } = req.body;
+    try {
+        const result = await pool.query(
+            'UPDATE users SET username = $1, email = $2, role = $3 WHERE id = $4 RETURNING *',
+            [username, email, role, req.params.id]
+        );
+        res.json(result.rows[0]);
+    } catch (error) {
+        res.status(500).json({ message: 'Error actualizando usuario', error });
+    }
+};
+
+const deleteUser = async (req, res) => {
+    try{
+        await pool.query(
+            'DELETE FROM usersWHERE id = $1'[req.params.id]
+        )
+        res.json({ message: 'Usuario eliminado correctamente.' });
+    } catch (error) {
+        res.status(500).json({ message: 'Error eliminando usuario', error });
+    }
+};
+
+
+
 // Other CRUD operations for users, restaurants, menus, reservations, and orders can be added similarly.
 
-module.exports = { registerUser , loginUser  };
+module.exports = { registerUser , loginUser, getUser };
