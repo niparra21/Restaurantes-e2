@@ -1,6 +1,6 @@
 const express = require('express');
 const { registerUser , loginUser, getUser, updateUser, deleteUser, registerMenu, getMenu, updateMenu, deleteMenu, getOrder } = require('./Controller');
-const { authenticateJWT, isAdmin, canEdit } = require('./Middleware');
+const { authenticateJWT, isAdmin, canEdit, canSeeOrder } = require('./Middleware');
 
 const router = express.Router();
 
@@ -17,10 +17,10 @@ router.delete('/users/:id', authenticateJWT, canEdit, deleteUser);
 router.post('/menus', authenticateJWT, isAdmin, registerMenu);
 router.get('/menus/:id', authenticateJWT, getMenu);
 router.put('/menus/:id', authenticateJWT, isAdmin, updateMenu);
-router.delete('/users/:id', authenticateJWT, isAdmin, deleteMenu);
+router.delete('/menus/:id', authenticateJWT, isAdmin, deleteMenu);
 
 // CRUD de pedido
 
-router.get('/orders/:id', authenticateJWT, getOrder);
+router.get('/orders/:id', authenticateJWT, canSeeOrder, getOrder);
 
 module.exports = router;

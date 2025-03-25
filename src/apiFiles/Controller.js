@@ -105,13 +105,13 @@ const deleteMenu = async (req, res) => {
 
 const getOrder = async (req, res) => {
     try {
-        const order = await pool.query(
+        const result = await pool.query(
             'SELECT id, user_id, restaurant_id, menu_id, order_time, status FROM orders WHERE id = $1',
-            [req.order.id]
+            [req.params.id]
         );
-        res.json(order.rows[0]);
+        res.json(result.rows[0]);
     } catch (error) {
-        res.status(500).json({ message: 'Error obteniendo orden', error });
+        res.status(500).json({ message: 'Error obteniendo la orden', error });
     }
 };
 // Other CRUD operations for users, restaurants, menus, reservations, and orders can be added similarly.

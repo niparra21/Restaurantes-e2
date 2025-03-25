@@ -1,4 +1,5 @@
 const jwt = require('jsonwebtoken');
+const pool = require('./db');
 
 const authenticateJWT = (req, res, next) => {
     const token = req.headers['authorization']?.split(' ')[1];
@@ -32,5 +33,23 @@ const canEdit = (req, res, next) => {
     return res.status(403).json({ message: 'No tienes permiso para editar este usuario.' });
 };
 
+const canSeeOrder = async (req, res, next) => {
+    const userIdFromToken = req.user.id;
+    const userRole = req.user.role;
+    const orderId = req.params.id;
+    const result = await pool.query(
+        'SELECT user_id FROM orders WHERE id = $1',
+        [orderId]
+    );
+    const order = result.rows[0];
+    if (userIdFromToken === order.user_id || userRole === 'admin') {
+        return next();
+    }
 
-module.exports = { authenticateJWT, isAdmin, canEdit };
+    return res.status(403).json({ message: 'No tienes permiso para acceder a esta orden.' });
+};
+
+
+
+
+module.exports = { authenticateJWT, isAdmin, canEdit, canSeeOrder };
