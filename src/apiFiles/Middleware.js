@@ -22,4 +22,15 @@ const isAdmin = (req, res, next) => {
     next();
 };
 
-module.exports = { authenticateJWT, isAdmin };
+const canEdit = (req, res, next) => {
+    const userIdFromToken = req.user.id;         
+    const userRole = req.user.role;              
+    const userIdToEdit = parseInt(req.params.id); 
+    if (userIdFromToken === userIdToEdit || userRole === 'admin') {
+        return next(); // ✅ 
+    }
+    return res.status(403).json({ message: 'No tienes permiso para editar este usuario.' });
+};
+
+
+module.exports = { authenticateJWT, isAdmin, canEdit };

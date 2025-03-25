@@ -49,18 +49,71 @@ const updateUser = async (req, res) => {
 };
 
 const deleteUser = async (req, res) => {
-    try{
+    try {
         await pool.query(
-            'DELETE FROM usersWHERE id = $1'[req.params.id]
-        )
+            'DELETE FROM users WHERE id = $1',
+            [req.params.id]
+        );
         res.json({ message: 'Usuario eliminado correctamente.' });
     } catch (error) {
         res.status(500).json({ message: 'Error eliminando usuario', error });
     }
 };
 
+const registerMenu  = async (req, res) => {
+    const { restaurantID, name, description } = req.body;
+    const result = await pool.query('INSERT INTO menus (restaurant_id, name, description) VALUES ($1, $2, $3) RETURNING *', [restaurantID, name, description]);
+    res.status(201).json(result.rows[0]);
+};
 
+const getMenu = async (req, res) => {
+    try {
+        const menu = await pool.query(
+            'SELECT id, restaurant_id, name, description FROM menus WHERE id = $1',
+            [req.params.id]
+        );
+        res.json(menu.rows[0]);
+    } catch (error) {
+        res.status(500).json({ message: 'Error obteniendo menu', error });
+    }
+};
 
+const updateMenu = async (req, res) => {
+    const { restaurantID, name, description } = req.body;
+    try {
+        const result = await pool.query(
+            'UPDATE menus SET restaurant_id = $1, name = $2, description = $3 WHERE id = $4 RETURNING *',
+            [restaurantID, name, description, req.params.id]
+        );
+        res.json(result.rows[0]);
+    } catch (error) {
+        res.status(500).json({ message: 'Error actualizando menu', error });
+    }
+};
+
+const deleteMenu = async (req, res) => {
+    try {
+        await pool.query(
+            'DELETE FROM menus WHERE id = $1',
+            [req.params.id]
+        );
+        res.json({ message: 'Menu eliminado correctamente.' });
+    } catch (error) {
+        res.status(500).json({ message: 'Error eliminando menu', error });
+    }
+};
+
+const getOrder = async (req, res) => {
+    try {
+        const order = await pool.query(
+            'SELECT id, user_id, restaurant_id, menu_id, order_time, status FROM orders WHERE id = $1',
+            [req.order.id]
+        );
+        res.json(order.rows[0]);
+    } catch (error) {
+        res.status(500).json({ message: 'Error obteniendo orden', error });
+    }
+};
 // Other CRUD operations for users, restaurants, menus, reservations, and orders can be added similarly.
 
-module.exports = { registerUser , loginUser, getUser };
+module.exports = { registerUser , loginUser, getUser, updateUser, deleteUser, registerMenu, getMenu, updateMenu, deleteMenu, getOrder };
