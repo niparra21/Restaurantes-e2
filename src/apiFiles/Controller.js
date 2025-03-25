@@ -1,7 +1,6 @@
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const pool = require('./db');
-const { useFormState } = require('react-dom');
 
 // User Registration
 const registerUser  = async (req, res) => {
