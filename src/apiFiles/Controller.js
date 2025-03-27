@@ -285,8 +285,6 @@ const getRestaurants = async (req, res) => {
   }
 };
 
-
-
 const registerMenu = async (req, res) => {
   const { restaurantID, name, description } = req.body;
   try{
@@ -334,6 +332,43 @@ const deleteMenu = async (req, res) => {
   }
 };
 
+const registerReservation = async (req, res) => {
+  const { user_id, restaurant_id, reservation_time } = req.body;
+  try {
+    const result = await pool.query(
+      `INSERT INTO reservations (user_id, restaurant_id, reservation_time, created_at, updated_at) VALUES ($1, $2, $3, NOW(), NOW()) RETURNING *`,
+      [user_id, restaurant_id, reservation_time]
+    );
+    res.status(201).json(result.rows[0]);
+  } catch (error) {
+    console.error('Error registrando reserva:', error);
+    res.status(500).json({ message: 'Error registrando reserva', error });
+  }
+};
+
+const deleteReservation = async (req, res) => {
+  try {
+    await pool.query('DELETE FROM reservations WHERE id = $1', [req.params.id]);
+    res.json({ message: 'Reservacion eliminada correctamente.' });
+  } catch (error) {
+    res.status(500).json({ message: 'Error eliminando Reservacion', error });
+  }
+};
+
+const registerOrder = async (req, res) => {
+  const { user_id, restaurant_id, menu_id, order_time, status } = req.body;
+  try {
+    const result = await pool.query(
+      `INSERT INTO orders (user_id, restaurant_id, menu_id, order_time, status, created_at, updated_at) VALUES ($1, $2, $3, $4, $5, NOW(), NOW()) RETURNING *`,
+      [user_id, restaurant_id, menu_id, order_time, status]
+    );
+    res.status(201).json(result.rows[0]);
+  } catch (error) {
+    console.error("Error registrando orden:", error);
+    res.status(500).json({ message: 'Error registrando orden', error });
+  }
+};
+
 const getOrder = async (req, res) => {
   try {
     const result = await pool.query(
@@ -346,4 +381,4 @@ const getOrder = async (req, res) => {
   }
 };
 
-module.exports = {registerUser,loginUser,getUser,updateUser,deleteUser,registerMenu,getMenu,updateMenu,deleteMenu,getOrder,registerRestaurant,getRestaurants};
+module.exports = {registerUser,loginUser,getUser,updateUser,deleteUser,registerMenu,getMenu,updateMenu,deleteMenu,getOrder,registerRestaurant,getRestaurants,registerReservation,deleteReservation,registerOrder};
