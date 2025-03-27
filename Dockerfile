@@ -1,4 +1,4 @@
-FROM node:14
+FROM node:18
 
 WORKDIR /usr/src/app
 
@@ -8,4 +8,4 @@ RUN npm install
 COPY . .
 
 EXPOSE 5000
-CMD ["node", "src/index.js"]
+CMD ["node", "server.js"]

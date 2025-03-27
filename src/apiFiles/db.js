@@ -1,4 +1,4 @@
-require('dotenv').config({ path: __dirname + '/.env' });
+require('dotenv').config({ path: __dirname + '/../.env' });
 
 const { Pool } = require('pg');
 
@@ -19,9 +19,9 @@ const pool = new Pool({
 const testDBConnection = async () => {
     try {
         const res = await pool.query('SELECT NOW()');
-        console.log('✅ Conexión exitosa a PostgreSQL:', res.rows[0]);
+        console.log('Conexión exitosa a PostgreSQL:', res.rows[0]);
     } catch (err) {
-        console.error('❌ Error al conectar a PostgreSQL:', err.message);
+        console.error('Error al conectar a PostgreSQL:', err.message);
     }
 };
 

@@ -1,0 +1,86 @@
+version: '3.8'
+
+services:
+  db:
+    image: postgres
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: mitzy
+      POSTGRES_DB: Restaurante
+    ports:
+      - "5432:5432"
+    volumes:
+      - db-data:/var/lib/postgresql/data
+      - ./init.sql:/docker-entrypoint-initdb.d/init.sql 
+    networks:
+      - backend-network
+
+  # Base de datos para Keycloak
+  keycloak-db:
+    image: postgres
+    environment:
+      POSTGRES_DB: keycloak
+      POSTGRES_USER: keycloak
+      POSTGRES_PASSWORD: keycloak
+    volumes:
+      - keycloak-db-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U keycloak -d keycloak"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    networks:
+      - backend-network
+
+  # Servicio Keycloak
+  keycloak:
+    image: quay.io/keycloak/keycloak:24.0.1
+    command: start-dev
+    environment:
+      KC_DB: postgres
+      KC_DB_URL: jdbc:postgresql://keycloak-db:5432/keycloak
+      KC_DB_USERNAME: keycloak
+      KC_DB_PASSWORD: keycloak
+      KEYCLOAK_ADMIN: admin
+      KEYCLOAK_ADMIN_PASSWORD: admin
+    ports:
+      - "8080:8080"
+    volumes:
+      - keycloak-data:/opt/keycloak/data
+    depends_on:
+      keycloak-db:
+        condition: service_healthy
+    networks:
+      - backend-network
+
+  # Servicio API
+  api:
+    build: .
+    environment:
+      DB_USER: postgres
+      DB_PASSWORD: mitzy
+      DB_NAME: Restaurante
+      DB_HOST: db
+      DB_PORT: 5432
+      KEYCLOAK_URL: http://keycloak:8080
+      KEYCLOAK_REALM: reserva-restaurantes
+      KEYCLOAK_CLIENT_ID: api-restaurantes
+      JWT_SECRET: your_jwt_secret
+    ports:
+      - "5000:5000"
+    depends_on:
+      - db
+      - keycloak
+    networks:
+      - backend-network
+
+# Configuración de volúmenes
+volumes:
+  db-data:
+  keycloak-db-data:
+  keycloak-data:
+
+# Configuración de red
+networks:
+  backend-network:
+    driver: bridge
