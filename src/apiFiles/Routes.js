@@ -1,6 +1,6 @@
 const express = require('express');
 const {registerUser,loginUser,getUser,updateUser,deleteUser,registerMenu,getMenu,updateMenu,deleteMenu,getOrder,registerRestaurant,getRestaurants,registerReservation,deleteReservation,registerOrder} = require('./Controller');
-const {authenticateJWT,isAdmin,canEdit,canSeeOrder} = require('./Middleware');
+const {authenticateJWT,isAdmin,canEdit} = require('./Middleware');
 
 const router = express.Router();
 
