@@ -32,6 +32,22 @@ services:
     networks:
       - backend-network
 
+    #Mongo
+
+    mongo:
+      image: mongo
+      container_name: mongo
+      environment:
+        MONGO_INITDB_ROOT_USERNAME: ${MONGO_INITDB_ROOT_USERNAME}
+        MONGO_INITDB_ROOT_PASSWORD: ${MONGO_INITDB_ROOT_PASSWORD}
+        MONGO_INITDB_DATABASE: ${MONGO_INITDB_DATABASE}
+      ports:
+        - "27017:27017"
+      volumes:
+        - mongo-data:/data/db
+      networks:
+        - backend-network
+
   # Servicio Keycloak
   keycloak:
     image: quay.io/keycloak/keycloak:24.0.1
