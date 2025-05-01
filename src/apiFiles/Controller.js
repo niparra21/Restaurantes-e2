@@ -4,6 +4,7 @@ const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const pool = require('./db');
 const axios = require('axios');
+const DAOFactory = require('./DAOFactory');
 const { getAdminToken } = require('./keycloak');
 app.use(express.json());
 
@@ -276,12 +277,18 @@ const registerRestaurant = async (req, res) => {
 
 const getRestaurants = async (req, res) => {
   try {
-    const menu = await pool.query(
-      'SELECT id, name, address, phone, owner_id FROM restaurants',
-    );
-    res.json(menu.rows);
+    const dbType = process.env.DB_TYPE; // 'postgres' o 'mongo'
+    const dbInstance = dbType === 'mongo' ? await require('./dbMongo')() : null; // Instancia de MongoDB si es necesario
+    const { restaurantDAO } = DAOFactory(dbType, dbInstance); // Obtiene el DAO dinámico
+
+    const restaurants = await restaurantDAO.getRestaurants(); // Llama al método del DAO
+    res.json(restaurants);
   } catch (error) {
-    res.status(500).json({ message: 'Error obteniendo restaurantes', error });
+    console.error('Error obteniendo restaurantes:', error); // Log detallado
+    res.status(500).json({ 
+      message: 'Error obteniendo restaurantes', 
+      error: error.message || error 
+    });
   }
 };
 
