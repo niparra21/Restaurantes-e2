@@ -30,4 +30,4 @@ class RestaurantDAOPostgres {
 
 }
 
-module.exports = new RestaurantDAOPostgres();
+module.exports = RestaurantDAOPostgres;

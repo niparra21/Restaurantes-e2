@@ -30,4 +30,4 @@ class OrderDAOPostgres {
 
 }
 
-module.exports = new OrderDAOPostgres();
+module.exports = OrderDAOPostgres;

@@ -63,4 +63,4 @@ class UserDAOPostgres {
     }
 }
 
-module.exports = new UserDAOPostgres();
+module.exports = UserDAOPostgres;

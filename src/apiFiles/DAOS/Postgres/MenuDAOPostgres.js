@@ -56,4 +56,4 @@ class MenuDAOPostgres {
 
 }
 
-module.exports = new MenuDAOPostgres();
+module.exports = MenuDAOPostgres;

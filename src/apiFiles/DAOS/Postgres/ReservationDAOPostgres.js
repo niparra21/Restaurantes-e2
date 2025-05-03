@@ -30,4 +30,4 @@ class ReservationDAOPostgres {
 
 }
 
-module.exports = new ReservationDAOPostgres();
+module.exports = ReservationDAOPostgres;

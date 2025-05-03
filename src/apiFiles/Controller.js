@@ -141,17 +141,25 @@ const loginUser = async (req, res) => {
   };
   
 
-const getUser = async (req, res) => {
-  try {
-    const user = await pool.query(
-      'SELECT id, username, email, role FROM users WHERE keycloak_id = $1',
-      [req.user.id]
-    );
-    res.json(user.rows[0]);
-  } catch (error) {
-    res.status(500).json({ message: 'Error obteniendo usuario', error });
-  }
-};
+  const getUser = async (req, res) => {
+    try {
+      const dbType = process.env.DB_TYPE; // 'postgres' o 'mongo'
+      const dbInstance = dbType === 'mongo' ? await require('./dbMongo')() : null; // Instancia de MongoDB si es necesario
+      const { userDAO } = DAOFactory(dbType, dbInstance); // Obtiene el DAO dinámico
+  
+      // Llama al método del DAO para obtener el usuario
+      const user = await userDAO.findUserById(req.user.id);
+  
+      if (!user) {
+        return res.status(404).json({ message: 'Usuario no encontrado' });
+      }
+  
+      res.json(user);
+    } catch (error) {
+      console.error('Error obteniendo usuario:', error);
+      res.status(500).json({ message: 'Error obteniendo usuario', error: error.message || error });
+    }
+  };
 
 const updateUser = async (req, res) => {
   const { email, role } = req.body; 
@@ -262,16 +270,20 @@ const deleteUser = async (req, res) => {
 const registerRestaurant = async (req, res) => {
   const { name, address, phone, owner_id } = req.body;
   try {
-    const result = await pool.query(
-      `INSERT INTO restaurants (name, address, phone, owner_id, created_at, updated_at)
-       VALUES ($1, $2, $3, $4, NOW(), NOW())
-       RETURNING *`,
-      [name, address, phone, owner_id]
-    );
-    res.status(201).json(result.rows[0]);
+    const dbType = process.env.DB_TYPE; // 'postgres' o 'mongo'
+    const dbInstance = dbType === 'mongo' ? await require('./dbMongo')() : null; // Instancia de MongoDB si es necesario
+    const { restaurantDAO } = DAOFactory(dbType, dbInstance); // Obtiene el DAO dinámico
+
+    // Llama al método del DAO para registrar el restaurante
+    const newRestaurant = await restaurantDAO.registerRestaurant(name, address, phone, owner_id);
+
+    res.status(201).json(newRestaurant); // Devuelve el restaurante registrado
   } catch (error) {
-    console.error("Error al registrar restaurante:", error);
-    res.status(500).json({ message: "Error registrando restaurante", error });
+    console.error("Error al registrar restaurante:", error); // Log detallado
+    res.status(500).json({ 
+      message: "Error registrando restaurante", 
+      error: error.message || error 
+    });
   }
 };
 
@@ -294,97 +306,140 @@ const getRestaurants = async (req, res) => {
 
 const registerMenu = async (req, res) => {
   const { restaurantID, name, description } = req.body;
-  try{
-    const result = await pool.query(
-      'INSERT INTO menus (restaurant_id, name, description) VALUES ($1, $2, $3) RETURNING *',
-      [restaurantID, name, description]
-    );
-    res.status(201).json(result.rows[0]);
-  }catch (error) {
-    res.status(500).json({ message: 'Error registrando menu', error });
+  try {
+    const dbType = process.env.DB_TYPE; 
+    const dbInstance = dbType === 'mongo' ? await require('./dbMongo')() : null; 
+    const { menuDAO } = DAOFactory(dbType, dbInstance); 
+
+   
+    const newMenu = await menuDAO.registerMenu(restaurantID, name, description);
+
+    res.status(201).json(newMenu);
+  } catch (error) {
+    console.error('Error registrando menú:', error);
+    res.status(500).json({ message: 'Error registrando menú', error: error.message || error });
   }
 };
 
 const getMenu = async (req, res) => {
   try {
-    const menu = await pool.query(
-      'SELECT id, restaurant_id, name, description FROM menus WHERE id = $1',
-      [req.params.id]
-    );
-    res.json(menu.rows[0]);
+    const dbType = process.env.DB_TYPE; 
+    const dbInstance = dbType === 'mongo' ? await require('./dbMongo')() : null; 
+    const { menuDAO } = DAOFactory(dbType, dbInstance); 
+
+    
+    const menu = await menuDAO.getMenu(req.params.id);
+
+    if (!menu) {
+      return res.status(404).json({ message: 'Menú no encontrado' });
+    }
+
+    res.json(menu);
   } catch (error) {
-    res.status(500).json({ message: 'Error obteniendo menu', error });
+    console.error('Error obteniendo menú:', error);
+    res.status(500).json({ message: 'Error obteniendo menú', error: error.message || error });
   }
 };
 
 const updateMenu = async (req, res) => {
   const { restaurantID, name, description } = req.body;
   try {
-    const result = await pool.query(
-      'UPDATE menus SET restaurant_id = $1, name = $2, description = $3 WHERE id = $4 RETURNING *',
-      [restaurantID, name, description, req.params.id]
-    );
-    res.json(result.rows[0]);
+    const dbType = process.env.DB_TYPE; 
+    const dbInstance = dbType === 'mongo' ? await require('./dbMongo')() : null;  
+    const { menuDAO } = DAOFactory(dbType, dbInstance); 
+
+  
+    const updatedMenu = await menuDAO.updateMenu(req.params.id, restaurantID, name, description);
+
+    res.json(updatedMenu);
   } catch (error) {
-    res.status(500).json({ message: 'Error actualizando menu', error });
+    console.error('Error actualizando menú:', error);
+    res.status(500).json({ message: 'Error actualizando menú', error: error.message || error });
   }
 };
 
 const deleteMenu = async (req, res) => {
   try {
-    await pool.query('DELETE FROM menus WHERE id = $1', [req.params.id]);
-    res.json({ message: 'Menu eliminado correctamente.' });
+    const dbType = process.env.DB_TYPE; 
+    const dbInstance = dbType === 'mongo' ? await require('./dbMongo')() : null; 
+    const { menuDAO } = DAOFactory(dbType, dbInstance); 
+
+    const deletedMenu = await menuDAO.deleteMenu(req.params.id);
+
+    res.json({ message: 'Menú eliminado correctamente.', menu: deletedMenu });
   } catch (error) {
-    res.status(500).json({ message: 'Error eliminando menu', error });
+    console.error('Error eliminando menú:', error);
+    res.status(500).json({ message: 'Error eliminando menú', error: error.message || error });
   }
 };
 
 const registerReservation = async (req, res) => {
   const { user_id, restaurant_id, reservation_time } = req.body;
   try {
-    const result = await pool.query(
-      `INSERT INTO reservations (user_id, restaurant_id, reservation_time, created_at, updated_at) VALUES ($1, $2, $3, NOW(), NOW()) RETURNING *`,
-      [user_id, restaurant_id, reservation_time]
-    );
-    res.status(201).json(result.rows[0]);
+    const dbType = process.env.DB_TYPE; 
+    const dbInstance = dbType === 'mongo' ? await require('./dbMongo')() : null; 
+    const { reservationDAO } = DAOFactory(dbType, dbInstance); 
+
+    
+    const newReservation = await reservationDAO.registerReservation(user_id, restaurant_id, reservation_time);
+
+    res.status(201).json(newReservation);
   } catch (error) {
     console.error('Error registrando reserva:', error);
-    res.status(500).json({ message: 'Error registrando reserva', error });
+    res.status(500).json({ message: 'Error registrando reserva', error: error.message || error });
   }
 };
 
 const deleteReservation = async (req, res) => {
   try {
-    await pool.query('DELETE FROM reservations WHERE id = $1', [req.params.id]);
-    res.json({ message: 'Reservacion eliminada correctamente.' });
+    const dbType = process.env.DB_TYPE; 
+    const dbInstance = dbType === 'mongo' ? await require('./dbMongo')() : null; 
+    const { reservationDAO } = DAOFactory(dbType, dbInstance); 
+
+    
+    const deletedReservation = await reservationDAO.deleteReservation(req.params.id);
+
+    res.json({ message: 'Reservación eliminada correctamente.', reservation: deletedReservation });
   } catch (error) {
-    res.status(500).json({ message: 'Error eliminando Reservacion', error });
+    console.error('Error eliminando reserva:', error);
+    res.status(500).json({ message: 'Error eliminando reserva', error: error.message || error });
   }
 };
 
 const registerOrder = async (req, res) => {
   const { user_id, restaurant_id, menu_id, order_time, status } = req.body;
   try {
-    const result = await pool.query(
-      `INSERT INTO orders (user_id, restaurant_id, menu_id, order_time, status, created_at, updated_at) VALUES ($1, $2, $3, $4, $5, NOW(), NOW()) RETURNING *`,
-      [user_id, restaurant_id, menu_id, order_time, status]
-    );
-    res.status(201).json(result.rows[0]);
+    const dbType = process.env.DB_TYPE; 
+    const dbInstance = dbType === 'mongo' ? await require('./dbMongo')() : null; 
+    const { orderDAO } = DAOFactory(dbType, dbInstance); 
+
+    
+    const newOrder = await orderDAO.registerOrder(user_id, restaurant_id, menu_id, order_time, status);
+
+    res.status(201).json(newOrder);
   } catch (error) {
-    console.error("Error registrando orden:", error);
-    res.status(500).json({ message: 'Error registrando orden', error });
+    console.error('Error registrando orden:', error);
+    res.status(500).json({ message: 'Error registrando orden', error: error.message || error });
   }
 };
 
 const getOrder = async (req, res) => {
   try {
-    const result = await pool.query(
-      'SELECT id, user_id, restaurant_id, menu_id, order_time, status FROM orders WHERE id = $1',
-      [req.params.id]
-    );
-    res.json(result.rows[0]);
+    const dbType = process.env.DB_TYPE; 
+    const dbInstance = dbType === 'mongo' ? await require('./dbMongo')() : null; 
+    const { orderDAO } = DAOFactory(dbType, dbInstance); 
+
+    
+    const order = await orderDAO.getOrder(req.params.id);
+
+    if (!order) {
+      return res.status(404).json({ message: 'Orden no encontrada' });
+    }
+
+    res.json(order);
   } catch (error) {
-    res.status(500).json({ message: 'Error obteniendo la orden', error });
+    console.error('Error obteniendo orden:', error);
+    res.status(500).json({ message: 'Error obteniendo orden', error: error.message || error });
   }
 };
 
