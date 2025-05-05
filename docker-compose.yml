@@ -53,6 +53,25 @@ services:
     networks:
       - backend-network
 
+  nginx:
+    image: nginx:latest
+    ports:
+      - "80:80"
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+    depends_on:
+      - api
+      - search   
+    networks:
+      - backend-network
+
+  search:
+    image: nginxdemos/hello
+    ports:
+      - "4000:80"
+    networks:
+      - backend-network
+
   # Servicio API
   api:
     build: .
@@ -73,6 +92,7 @@ services:
       - keycloak
     networks:
       - backend-network
+
 
 # Configuración de volúmenes
 volumes:

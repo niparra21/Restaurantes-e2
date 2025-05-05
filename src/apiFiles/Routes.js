@@ -30,4 +30,8 @@ router.delete('/reservations/:id', authenticateJWT, deleteReservation);
 router.post('/orders', authenticateJWT, registerOrder);
 router.get('/orders/:id', authenticateJWT, getOrder);
 
+router.get('/', (req, res) => {
+    res.send('API funcionando correctamente en /api');
+});
+
 module.exports = router;
