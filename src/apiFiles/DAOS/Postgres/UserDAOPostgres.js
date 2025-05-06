@@ -40,6 +40,19 @@ class UserDAOPostgres {
         }
     }
 
+    async getUserByKeycloakId(keycloakId) {
+        try {
+            const result = await pool.query(
+                'SELECT * FROM users WHERE keycloak_id = $1',
+                [keycloakId]
+            );
+            return result.rows[0];
+        } catch (error) {
+            console.error("Error al buscar usuario por Keycloak ID:", error);
+            throw error;
+        }
+    }
+
     async updateUser(userId, email, role) {
         try {
             const result = await pool.query(

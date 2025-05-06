@@ -20,12 +20,16 @@ const registerUser = async (req, res) => {
       return res.status(400).json({ error: "Contraseña inválida" });
     }
 
-    const existingUser = await pool.query(
-      'SELECT * FROM users WHERE email = $1 OR username = $2',
-      [email, username]
-    );
-    if (existingUser.rows.length > 0) {
-      return res.status(409).json({ error: "Usuario o email ya registrado" });
+    const dbType = process.env.DB_TYPE; // 'postgres' o 'mongo'
+    const dbInstance = dbType === 'mongo' ? await require('./dbMongo')() : null;
+    const { userDAO } = DAOFactory(dbType, dbInstance);
+
+    // Verificar si el usuario ya existe
+    const existingUser = await userDAO.findUserByEmailOrUsername(email, username);
+    const userExists = dbType === 'postgres' ? existingUser.length > 0 : !!existingUser;
+
+    if (userExists) {
+        return res.status(409).json({ error: "Usuario o email ya registrado" });
     }
 
     const hashedPassword = await bcrypt.hash(password, 10);
@@ -61,10 +65,7 @@ const registerUser = async (req, res) => {
     }
     const keycloakId = locationHeader.split('/').pop();
 
-    const result = await pool.query(
-      'INSERT INTO users (username, password, email, role, keycloak_id) VALUES ($1, $2, $3, $4, $5) RETURNING *',
-      [username, hashedPassword, email, role, keycloakId]
-    );
+    const newUser = await userDAO.createUser(username, hashedPassword, email, role, keycloakId);
 
     const roleResponse = await axios.get(
       `${process.env.KEYCLOAK_URL}/admin/realms/${process.env.KEYCLOAK_REALM}/roles/${role}`,
@@ -82,11 +83,11 @@ const registerUser = async (req, res) => {
     );
 
     res.status(201).json({
-      id: result.rows[0].id,
-      username: result.rows[0].username,
-      email: result.rows[0].email,
-      role: result.rows[0].role,
-      keycloak_id: result.rows[0].keycloak_id
+      id: newUser.id || newUser._id, // PostgreSQL usa `id`, MongoDB usa `_id`
+      username: newUser.username,
+      email: newUser.email,
+      role: newUser.role,
+      keycloak_id: newUser.keycloak_id
     });
 
   } catch (error) {
@@ -101,6 +102,56 @@ const registerUser = async (req, res) => {
     });
   }
 };
+
+const cloneUserToMongo = async (req, res) => {
+  const { keycloak_id } = req.body;
+
+  if (!keycloak_id) {
+    return res.status(400).json({ error: "Se requiere el keycloak_id" });
+  }
+
+  try {
+
+    const { userDAO: postgresUserDAO } = DAOFactory('postgres', null);
+    const existingUser = await postgresUserDAO.getUserByKeycloakId(keycloak_id);
+
+    if (!existingUser) {
+      return res.status(404).json({ error: "Usuario no encontrado en PostgreSQL" });
+    }
+
+    // Preparar instancia Mongo
+    const dbInstance = await require('./dbMongo')();
+    const { userDAO: mongoUserDAO } = DAOFactory('mongo', dbInstance);
+
+    // Insertar en MongoDB usando el mismo keycloak_id
+    const createdUser = await mongoUserDAO.createUser(
+      existingUser.username,
+      existingUser.password,
+      existingUser.email,
+      existingUser.role,
+      existingUser.keycloak_id
+    );
+
+    res.status(201).json({
+      message: "Usuario clonado exitosamente en MongoDB",
+      user: {
+        id: createdUser._id,
+        username: createdUser.username,
+        email: createdUser.email,
+        role: createdUser.role,
+        keycloak_id: createdUser.keycloak_id
+      }
+    });
+
+  } catch (error) {
+    console.error("Error clonando usuario a MongoDB:", error);
+    res.status(500).json({
+      message: "Error clonando usuario a MongoDB",
+      error: error.message || error
+    });
+  }
+};
+
 
 
 const loginUser = async (req, res) => {
@@ -161,110 +212,127 @@ const loginUser = async (req, res) => {
     }
   };
 
-const updateUser = async (req, res) => {
-  const { email, role } = req.body; 
-  const userId = req.params.id;
-
-  try {
-    const result = await pool.query('SELECT keycloak_id FROM users WHERE id = $1', [userId]);
-    if (result.rows.length === 0) {
-      return res.status(404).json({ message: 'Usuario no encontrado' });
-    }
-    const keycloakId = result.rows[0].keycloak_id;
-
-    const adminToken = await getAdminToken();
-
-    await axios.put(
-      `${process.env.KEYCLOAK_URL}/admin/realms/${process.env.KEYCLOAK_REALM}/users/${keycloakId}`,
-      {
-        email,
-        lastName: "-", 
-      },
-      {
-        headers: {
-          Authorization: `Bearer ${adminToken}`,
-          "Content-Type": "application/json"
-        }
+  const updateUser = async (req, res) => {
+    const { email, role } = req.body;
+   
+  
+    try {
+      const dbType = process.env.DB_TYPE; // 'postgres' o 'mongo'
+      const dbInstance = dbType === 'mongo' ? await require('./dbMongo')() : null; // Instancia de MongoDB si es necesario
+      const { userDAO } = DAOFactory(dbType, dbInstance); // Obtiene el DAO dinámico
+  
+      // Buscar usuario por ID
+      const existingUser = await userDAO.findUserById(userId);
+      if (!existingUser) {
+        return res.status(404).json({ message: 'Usuario no encontrado' });
       }
-    );
-
-    const currentRolesResponse = await axios.get(
-      `${process.env.KEYCLOAK_URL}/admin/realms/${process.env.KEYCLOAK_REALM}/users/${keycloakId}/role-mappings/realm`,
-      {
-        headers: {
-          Authorization: `Bearer ${adminToken}`
+  
+      const keycloakId = existingUser.keycloak_id;
+  
+      // Obtener token de administrador de Keycloak
+      const adminToken = await getAdminToken();
+  
+      // Actualizar el correo electrónico en Keycloak
+      await axios.put(
+        `${process.env.KEYCLOAK_URL}/admin/realms/${process.env.KEYCLOAK_REALM}/users/${keycloakId}`,
+        {
+          email,
+          lastName: "-",
+        },
+        {
+          headers: {
+            Authorization: `Bearer ${adminToken}`,
+            "Content-Type": "application/json",
+          },
         }
-      }
-    );
-
-    if (currentRolesResponse.data.length > 0) {
-      await axios.delete(
+      );
+  
+      // Obtener roles actuales del usuario en Keycloak
+      const currentRolesResponse = await axios.get(
         `${process.env.KEYCLOAK_URL}/admin/realms/${process.env.KEYCLOAK_REALM}/users/${keycloakId}/role-mappings/realm`,
         {
           headers: {
-            Authorization: `Bearer ${adminToken}`
+            Authorization: `Bearer ${adminToken}`,
           },
-          data: currentRolesResponse.data
         }
       );
+  
+      // Eliminar roles actuales en Keycloak
+      if (currentRolesResponse.data.length > 0) {
+        await axios.delete(
+          `${process.env.KEYCLOAK_URL}/admin/realms/${process.env.KEYCLOAK_REALM}/users/${keycloakId}/role-mappings/realm`,
+          {
+            headers: {
+              Authorization: `Bearer ${adminToken}`,
+            },
+            data: currentRolesResponse.data,
+          }
+        );
+      }
+  
+      // Asignar nuevo rol en Keycloak
+      const newRoleResponse = await axios.get(
+        `${process.env.KEYCLOAK_URL}/admin/realms/${process.env.KEYCLOAK_REALM}/roles/${role}`,
+        {
+          headers: { Authorization: `Bearer ${adminToken}` },
+        }
+      );
+  
+      await axios.post(
+        `${process.env.KEYCLOAK_URL}/admin/realms/${process.env.KEYCLOAK_REALM}/users/${keycloakId}/role-mappings/realm`,
+        [newRoleResponse.data],
+        {
+          headers: { Authorization: `Bearer ${adminToken}` },
+        }
+      );
+  
+      // Actualizar usuario en la base de datos
+      const updatedUser = await userDAO.updateUser(userId, email, role);
+  
+      res.json(updatedUser);
+    } catch (error) {
+      console.error('Error actualizando usuario:', error.response?.data || error.message);
+      res.status(500).json({ message: 'Error actualizando usuario', error });
     }
+  };
 
-    const newRoleResponse = await axios.get(
-      `${process.env.KEYCLOAK_URL}/admin/realms/${process.env.KEYCLOAK_REALM}/roles/${role}`,
-      {
-        headers: { Authorization: `Bearer ${adminToken}` }
+
+  const deleteUser = async (req, res) => {
+    const userId = req.params.id;
+  
+    try {
+      const dbType = process.env.DB_TYPE; // 'postgres' o 'mongo'
+      const dbInstance = dbType === 'mongo' ? await require('./dbMongo')() : null; // Instancia de MongoDB si es necesario
+      const { userDAO } = DAOFactory(dbType, dbInstance); // Obtiene el DAO dinámico
+  
+      // Buscar usuario por ID
+      const existingUser = await userDAO.findUserById(userId);
+      if (!existingUser) {
+        return res.status(404).json({ message: 'Usuario no encontrado.' });
       }
-    );
-
-    await axios.post(
-      `${process.env.KEYCLOAK_URL}/admin/realms/${process.env.KEYCLOAK_REALM}/users/${keycloakId}/role-mappings/realm`,
-      [newRoleResponse.data],
-      {
-        headers: { Authorization: `Bearer ${adminToken}` }
-      }
-    );
-    const updated = await pool.query(
-      'UPDATE users SET email = $1, role = $2 WHERE id = $3 RETURNING *',
-      [email, role, userId]
-    );
-    res.json(updated.rows[0]);
-  } catch (error) {
-    console.error('Error actualizando usuario:', error.response?.data || error.message);
-    res.status(500).json({ message: 'Error actualizando usuario', error });
-  }
-};
-
-
-
-const deleteUser = async (req, res) => {
-  const userId = req.params.id;
-
-  try {
-    const result = await pool.query('SELECT keycloak_id FROM users WHERE id = $1', [userId]);
-
-    if (result.rows.length === 0) {
-      return res.status(404).json({ message: 'Usuario no encontrado.' });
+  
+      const keycloakId = existingUser.keycloak_id;
+  
+      // Obtener token de administrador de Keycloak
+      const adminToken = await getAdminToken();
+  
+      // Eliminar usuario en Keycloak
+      await axios.delete(
+        `${process.env.KEYCLOAK_URL}/admin/realms/${process.env.KEYCLOAK_REALM}/users/${keycloakId}`,
+        {
+          headers: { Authorization: `Bearer ${adminToken}` },
+        }
+      );
+  
+      // Eliminar usuario en la base de datos
+      await userDAO.deleteUser(userId);
+  
+      res.json({ message: 'Usuario eliminado correctamente' });
+    } catch (error) {
+      console.error('Error eliminando usuario:', error.response?.data || error.message);
+      res.status(500).json({ message: 'Error eliminando usuario', error });
     }
-
-    const keycloakId = result.rows[0].keycloak_id;
-
-    const adminToken = await getAdminToken();
-
-    await axios.delete(
-      `${process.env.KEYCLOAK_URL}/admin/realms/${process.env.KEYCLOAK_REALM}/users/${keycloakId}`,
-      {
-        headers: { Authorization: `Bearer ${adminToken}` }
-      }
-    );
-
-    await pool.query('DELETE FROM users WHERE id = $1', [userId]);
-
-    res.json({ message: 'Usuario eliminado correctamente' });
-  } catch (error) {
-    console.error('Error eliminando usuario:', error.response?.data || error.message);
-    res.status(500).json({ message: 'Error eliminando usuario', error });
-  }
-};
+  };
 
 
 const registerRestaurant = async (req, res) => {
@@ -443,4 +511,4 @@ const getOrder = async (req, res) => {
   }
 };
 
-module.exports = {registerUser,loginUser,getUser,updateUser,deleteUser,registerMenu,getMenu,updateMenu,deleteMenu,getOrder,registerRestaurant,getRestaurants,registerReservation,deleteReservation,registerOrder};
+module.exports = {registerUser,cloneUserToMongo,loginUser,getUser,updateUser,deleteUser,registerMenu,getMenu,updateMenu,deleteMenu,getOrder,registerRestaurant,getRestaurants,registerReservation,deleteReservation,registerOrder};
