@@ -1,6 +1,6 @@
-version: '3.8'
-
 services:
+
+  # Postgres
   db:
     image: postgres
     environment:
@@ -15,8 +15,7 @@ services:
     networks:
       - backend-network
   
-  #Mongo
-
+  # Mongo
   mongo:
     image: mongo
     container_name: mongo
@@ -28,6 +27,19 @@ services:
       - "27017:27017"
     volumes:
       - mongo-data:/data/db
+    networks:
+      - backend-network
+
+  # Redis
+  redis:
+    image: redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis-data:/data
+    environment:
+      - REDIS_PASSWORD=${REDIS_PASSWORD}
+    restart: unless-stopped
     networks:
       - backend-network
 
@@ -48,7 +60,6 @@ services:
     networks:
       - backend-network
 
-  
   # Servicio Keycloak
   keycloak:
     image: quay.io/keycloak/keycloak:24.0.1
@@ -83,17 +94,20 @@ services:
       KEYCLOAK_REALM: reserva-restaurantes
       KEYCLOAK_CLIENT_ID: api-restaurantes
       JWT_SECRET: your_jwt_secret
+      REDIS_URL: redis://:${REDIS_PASSWORD}@redis:6379
     ports:
       - "5000:5000"
     depends_on:
       - db
       - keycloak
+      - redis
     networks:
       - backend-network
 
 # Configuración de volúmenes
 volumes:
   db-data:
+  redis-data:
   mongo-data:
   keycloak-db-data:
   keycloak-data:
