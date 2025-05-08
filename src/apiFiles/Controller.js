@@ -5,8 +5,20 @@ const jwt = require('jsonwebtoken');
 const pool = require('./db');
 const axios = require('axios');
 const DAOFactory = require('./DAOFactory');
+const redis = require('ioredis');
 const { getAdminToken } = require('./keycloak');
+
 app.use(express.json());
+
+const redisClient = new redis(process.env.REDIS_URL || 'redis://localhost:6379');
+
+redisClient.on('connect', () => {
+  console.log('✅ Conectado a Redis');
+});
+
+redisClient.on('error', (err) => {
+  console.error('❌ Error de Redis:', err);
+});
 
 const registerUser = async (req, res) => {
   const { username, password, email, role } = req.body;
@@ -355,19 +367,43 @@ const registerRestaurant = async (req, res) => {
   }
 };
 
-const getRestaurants = async (req, res) => {
-  try {
-    const dbType = process.env.DB_TYPE; // 'postgres' o 'mongo'
-    const dbInstance = dbType === 'mongo' ? await require('./dbMongo')() : null; // Instancia de MongoDB si es necesario
-    const { restaurantDAO } = DAOFactory(dbType, dbInstance); // Obtiene el DAO dinámico
+/* --------------------------------------------------------------------- */
+// GET ALL RESTAURANTS
 
-    const restaurants = await restaurantDAO.getRestaurants(); // Llama al método del DAO
+const getRestaurants = async (req, res) => {
+  const cacheKey = 'restaurants:all'; // unique key for this query
+  const cacheExpiration = 3600; // expiration time = 1 hour in seconds
+
+  try {
+    // 1. try to connect to redis
+    const cachedRestaurants = await redisClient.get(cacheKey);
+    
+    if (cachedRestaurants){
+      console.log('Got restaurants from Redis');
+      return res.json(JSON.parse(cachedRestaurants));
+    }
+
+    // 2. if there is no cache for this, look in db
+    const dbType = process.env.DB_TYPE; // type of db currently using (postres or mong)
+    const dbInstance = dbType === 'mongo' ? await require('./dbMongo')() : null; // initialize process
+    const { restaurantDAO } = DAOFactory(dbType, dbInstance); // get the DAO
+
+    const restaurants = await restaurantDAO.getRestaurants(); // call the DAO's method to get restaurants
+
+    // 3. save info in Redis
+    await redisClient.setex(cacheKey, cacheExpiration, JSON.stringify(restaurants));
+    console.log('Stored restaurants in Redis');
     res.json(restaurants);
   } catch (error) {
-    console.error('Error obteniendo restaurantes:', error); // Log detallado
+    console.error('Error obteniendo restaurantes:', {
+      message: error.message,
+      stack: error.stack,
+      timestamp: new Date().toISOString()
+    });
+    
     res.status(500).json({ 
-      message: 'Error obteniendo restaurantes', 
-      error: error.message || error 
+      message: 'Error obteniendo restaurantes',
+      error: process.env.NODE_ENV === 'development' ? error.message : 'Internal server error'
     });
   }
 };
