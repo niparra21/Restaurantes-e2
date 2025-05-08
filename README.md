@@ -55,3 +55,61 @@ isAdmin: Restringe el acceso a ciertos endpoints solo para administradores.
 canEdit: Permite a los usuarios modificar su propia información o a administradores editar información de otros usuarios.
 
 Gracias a estas medidas, la API ofrece un entorno seguro y controlado para la gestión de restaurantes.
+
+### 4.  Initialize MongoDB Sharded Cluster
+
+# a. Initialize Config Server Replica Set
+
+``` bash
+docker exec -it mongo-config1 mongosh
+```
+
+``` js
+rs.initiate({
+    _id: "configReplSet",
+    configsvr: true,
+    members: [
+      { _id: 0, host: "mongo-config1:27017" },
+      { _id: 1, host: "mongo-config2:27017" },
+      { _id: 2, host: "mongo-config3:27017" }
+    ]
+  });
+```
+
+# b. Initialize Shard Replica Set
+
+``` bash
+docker exec -it mongors1n1 mongosh
+```
+
+``` js
+rs.initiate({
+    _id: "mongors1",
+    members: [
+      { _id: 0, host: "mongors1n1:27017" },
+      { _id: 1, host: "mongors1n2:27017" },
+      { _id: 2, host: "mongors1n3:27017" }
+    ]
+  });
+```
+
+use this command to check the status
+
+``` bash
+rs.status()
+``` 
+
+# b. Configure Sharding
+
+``` bash
+docker exec -it mongos mongosh
+```
+
+``` js
+sh.addShard("mongors1/mongors1n1:27017,mongors1n2:27017,mongors1n3:27017")
+sh.enableSharding("Restaurante")
+sh.shardCollection("Restaurante.products", { product_id: 1 })
+sh.shardCollection("Restaurante.reservations", { reservation_id: 1 })
+sh.status() // Verify shard, database, and collections
+
+```

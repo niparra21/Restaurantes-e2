@@ -1,9 +1,13 @@
 require('dotenv').config({ path: __dirname + '/../.env' });
 const { MongoClient } = require('mongodb');
 
-const uri = `mongodb://${process.env.MONGO_INITDB_ROOT_USERNAME}:${process.env.MONGO_INITDB_ROOT_PASSWORD}@${process.env.MONGO_HOST}:27017`;
+// Conexión al router mongos
+const uri = `mongodb://${process.env.MONGO_HOST}:27017/${process.env.MONGO_INITDB_DATABASE}`;
 
-const client = new MongoClient(uri);
+const client = new MongoClient(uri, {
+    useNewUrlParser: true,
+    useUnifiedTopology: true, // Maneja automáticamente la replicación y el sharding
+});
 
 const connectMongoDB = async () => {
     try {
@@ -12,6 +16,7 @@ const connectMongoDB = async () => {
         return client.db(process.env.MONGO_INITDB_DATABASE);
     } catch (err) {
         console.error('Error al conectar a MongoDB:', err.message);
+        throw err;
     }
 };
 

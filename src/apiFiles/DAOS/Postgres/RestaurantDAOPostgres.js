@@ -2,7 +2,7 @@ const pool = require('../../db');
 
 class RestaurantDAOPostgres {
     
-    async registerRestaurant(name, addres, phone, owner_id){
+    async registerRestaurant(name, address, phone, owner_id){
         try {
             const result = await pool.query(
                 `INSERT INTO restaurants (name, address, phone, owner_id, created_at, updated_at)
