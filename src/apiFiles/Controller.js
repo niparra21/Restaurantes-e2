@@ -398,7 +398,7 @@ const registerRestaurant = async (req, res) => {
 
 const getRestaurants = async (req, res) => {
   const cacheKey = 'restaurants:all';                                                               // unique key for this query
-  const cacheExpiration = 3600;                                                                     // expiration time = 1 hour in seconds
+  const cacheExpiration = 300;                                                                      // expiration time = 5 minutes in seconds
 
   try {
     // 1. try to connect to redis
@@ -460,7 +460,7 @@ const registerMenu = async (req, res) => {
 
 const getMenu = async (req, res) => {
   const cacheKey = `menu:${req.params.id}`;                                                         // unique cache key
-  const cacheExpiration = 3600                                                                      // expiration time = 1 hour in seconds
+  const cacheExpiration = 300                                                                       // expiration time = 5 minutes in seconds
 
   try {
     // 1. try to connect to redis
@@ -550,6 +550,7 @@ const registerReservation = async (req, res) => {
     const { reservationDAO } = DAOFactory(dbType, dbInstance);                                      // get DAO instance for reservations
 
     const newReservation = await reservationDAO.registerReservation(user_id, restaurant_id, reservation_time); // register new reservation in db
+    await redisClient.del(`menu:${newReservation.id}`);
     res.status(201).json(newReservation);                                                           // return new reservation
   } catch (error) {
     console.error('Error registrando reserva:', error);                                             // log the error
@@ -565,6 +566,7 @@ const getReservation = async (req, res) => {
   const cacheExpiration = 300;                                                                      // cache expiration time in seconds (5 minutes)
 
   try {
+    // 1. try to connect to redis
     const cachedReservation = await redisClient.get(cacheKey);                                      // retrieve reservation from cache
     if (cachedReservation) {                                                                        // if reservation is cached
       console.log("Got reservation from Redis");                                                    // log a message
@@ -611,6 +613,14 @@ const deleteReservation = async (req, res) => {
 /* ============================================================================================== */
 // ORDERS
 
+/* Handles all orders-related operations:
+ * - Order registration (POST)
+ * - Order information (GET)
+ */
+
+/* --------------------------------------------------------------------- */
+// POST - CREATE ORDER
+
 const registerOrder = async (req, res) => {
   const { user_id, restaurant_id, menu_id, order_time, status } = req.body;
   try {
@@ -618,9 +628,8 @@ const registerOrder = async (req, res) => {
     const dbInstance = dbType === 'mongo' ? await require('./dbMongo')() : null; 
     const { orderDAO } = DAOFactory(dbType, dbInstance); 
 
-    
     const newOrder = await orderDAO.registerOrder(user_id, restaurant_id, menu_id, order_time, status);
-
+    await redisClient.del(`reservation:${newOrder.id}`);
     res.status(201).json(newOrder);
   } catch (error) {
     console.error('Error registrando orden:', error);
@@ -629,22 +638,32 @@ const registerOrder = async (req, res) => {
 };
 
 const getOrder = async (req, res) => {
+  const cacheKey = `order:${req.params.id}`;                                                        // create cache key for order
+  const cacheExpiration = 300;                                                                      // cache expiration time in seconds (5 minutes)
+
   try {
-    const dbType = process.env.DB_TYPE; 
-    const dbInstance = dbType === 'mongo' ? await require('./dbMongo')() : null; 
-    const { orderDAO } = DAOFactory(dbType, dbInstance); 
-
-    
-    const order = await orderDAO.getOrder(req.params.id);
-
-    if (!order) {
-      return res.status(404).json({ message: 'Orden no encontrada' });
+    // 1. try to connect to redis    
+    const cachedOrder = await redisClient.get(cacheKey);                                            // check if order exists in redis
+    if (cachedOrder) {                                                                              // if order is cached
+      console.log('Got order from Redis');                                                          // log a message
+      return res.json(JSON.parse(cachedOrder));                                                     // return cached order
     }
 
-    res.json(order);
-  } catch (error) {
-    console.error('Error obteniendo orden:', error);
-    res.status(500).json({ message: 'Error obteniendo orden', error: error.message || error });
+    // 2. if there is no cache for this, look in db
+    const dbType = process.env.DB_TYPE;                                                             // type of db currently using (postgres or mongo)
+    const dbInstance = dbType === 'mongo' ? await require('./dbMongo')() : null;                    // initialize process
+    const { orderDAO } = DAOFactory(dbType, dbInstance);                                            // get DAO instance for orders
+    
+    const order = await orderDAO.getOrder(req.params.id);                                           // retrieve order from db
+    if (!order) return res.status(404).json({ message: 'Orden no encontrada' });                    // if order is not found, return 404
+
+    // 3. save info in redis
+    await redisClient.setex(cacheKey, cacheExpiration, JSON.stringify(order));                      // cache order in redis
+    console.log('Saved order to Redis');                                                            // log a message
+    res.json(order);                                                                                // return order
+  } catch (error) {                                                                                 // if there's an error
+    console.error('Error obteniendo orden:', error);                                                // log the error
+    res.status(500).json({ message: 'Error obteniendo orden', error: error.message || error });     // return 500 error
   }
 };
 
