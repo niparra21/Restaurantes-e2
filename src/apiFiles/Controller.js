@@ -3,25 +3,7 @@
  * I Semestre - 2025
  */
 
-const express = require('express');
-const app = express();
-const bcrypt = require('bcryptjs');
-const axios = require('axios');
-const DAOFactory = require('./DAOFactory');
-const redis = require('ioredis');
-const { getAdminToken } = require('./keycloak');
-
-app.use(express.json());
-
-const redisClient = new redis(process.env.REDIS_URL || 'redis://localhost:6379');
-
-redisClient.on('connect', () => {
-  console.log('✅ Conectado a Redis');
-});
-
-redisClient.on('error', (err) => {
-  console.error('❌ Error de Redis:', err);
-});
+// API CONTROLLERS
 
 /* This code are the controllers for the API endpoints
  * Each function is responsible for handling a specific request
@@ -30,6 +12,19 @@ redisClient.on('error', (err) => {
  *  - Multi-database support (PostgreSQL/MongoDB)
  *  - DAO pattern implementation for data access abstraction
  */ 
+
+const express = require('express');
+const app = express();
+const bcrypt = require('bcryptjs');
+const axios = require('axios');
+const DAOFactory = require('./DAOFactory');
+const redis = require('ioredis');
+const KeycloakService = require('./KeycloakService');
+const { getAdminToken } = require('./keycloak')
+
+app.use(express.json());
+
+const redisClient = new redis(process.env.REDIS_URL || 'redis://localhost:6379');
 
 /* ============================================================================================== */
 // AUTHENTICATION
@@ -83,47 +78,48 @@ const cloneUserToMongo = async (req, res) => {
   }
 };
 
-
-
 const loginUser = async (req, res) => {
-    const { username, password } = req.body;
-  
-    try {
-      const response = await axios.post(
-        `${process.env.KEYCLOAK_URL}/realms/${process.env.KEYCLOAK_REALM}/protocol/openid-connect/token`,
-        new URLSearchParams({
-          grant_type: 'password',
-          client_id: process.env.KEYCLOAK_CLIENT_ID,
-          username,
-          password
-        }),
-        {
-          headers: { 
-            'Content-Type': 'application/x-www-form-urlencoded' 
-          }
+  const { username, password } = req.body;
+
+  try {
+    const response = await axios.post(
+      `${process.env.KEYCLOAK_URL}/realms/${process.env.KEYCLOAK_REALM}/protocol/openid-connect/token`,
+      new URLSearchParams({
+        grant_type: 'password',
+        client_id: process.env.KEYCLOAK_CLIENT_ID,
+        username,
+        password
+      }),
+      {
+        headers: { 
+          'Content-Type': 'application/x-www-form-urlencoded' 
         }
-      );
-  
-      res.json({ 
-        access_token: response.data.access_token,
-        refresh_token: response.data.refresh_token 
-      });
-  
-    } catch (error) {
-      console.error('Error en login:', {
-        url: `${process.env.KEYCLOAK_URL}/realms/${process.env.KEYCLOAK_REALM}/protocol/openid-connect/token`,
-        error: error.response?.data 
-      });
-      
-      res.status(401).json({
-        message: 'Error de autenticación',
-        error: error.response?.data || error.message
-      });
-    }
-  };
+      }
+    );
+
+    res.json({ 
+      access_token: response.data.access_token,
+      refresh_token: response.data.refresh_token 
+    });
+
+  } catch (error) {
+    console.error('Error en login:', {
+      url: `${process.env.KEYCLOAK_URL}/realms/${process.env.KEYCLOAK_REALM}/protocol/openid-connect/token`,
+      error: error.response?.data 
+    });
+    
+    res.status(401).json({
+      message: 'Error de autenticación',
+      error: error.response?.data || error.message
+    });
+  }
+};
   
 /* ============================================================================================== */
 // USERS
+
+/* --------------------------------------------------------------------- */
+// POST - CREATE USER
 
 const registerUser = async (req, res) => {
   const { username, password, email, role } = req.body;
@@ -220,19 +216,32 @@ const registerUser = async (req, res) => {
   }
 };
 
+/* --------------------------------------------------------------------- */
+// GET - CURRENT LOGGED USER
+
 const getUser = async (req, res) => {
+  const cacheKey = `user:${req.user.id}`;                                                           // unique key for this query
+  const cacheExpiration = 300;                                                                      // expiration time = 5 minutes in seconds
+
   try {
+    // 1. try to connect to redis
+    const cachedUser = await redisClient.get(cacheKey);                                             // get info from cache
+    if (cachedUser) {                                                                               // if info is in cache
+      console.log("Got user from Redis");                                                           // log a message
+      return res.json(JSON.parse(cachedUser));                                                      // return the cached info
+    }
+
+    // 2. if there is no cache for this, look in db
     const dbType = process.env.DB_TYPE;                                                             // 'postgres' o 'mongo'
     const dbInstance = dbType === 'mongo' ? await require('./dbMongo')() : null;                    // Instancia de MongoDB si es necesario
     const { userDAO } = DAOFactory(dbType, dbInstance);                                             // Obtiene el DAO dinámico
 
-    // Llama al método del DAO para obtener el usuario
-    const user = await userDAO.findUserById(req.user.id);
+    const user = await userDAO.findUserByKeycloakId(req.user.id);
 
-    if (!user) {
-      return res.status(404).json({ message: 'Usuario no encontrado' });
-    }
+    if (!user) return res.status(404).json({ message: 'Usuario no encontrado' });
 
+    // 3. save info in redis
+    await redisClient.setex(cacheKey, cacheExpiration, JSON.stringify(user));                       // save info in cache with expiration time
     res.json(user);
   } catch (error) {
     console.error('Error obteniendo usuario:', error);
@@ -240,83 +249,39 @@ const getUser = async (req, res) => {
   }
 };
 
+/* --------------------------------------------------------------------- */
+// PUT - UPDATE USER BY ID
+
 const updateUser = async (req, res) => {
+  const userId = req.params.id;
   const { email, role } = req.body;
-  
 
   try {
-    const dbType = process.env.DB_TYPE;                                                             // 'postgres' o 'mongo'
-    const dbInstance = dbType === 'mongo' ? await require('./dbMongo')() : null;                    // Instancia de MongoDB si es necesario
-    const { userDAO } = DAOFactory(dbType, dbInstance);                                             // Obtiene el DAO dinámico
+    // 1. get current db information
+    const dbType = process.env.DB_TYPE;
+    const dbInstance = dbType === 'mongo' ? await require('./dbMongo')() : null;
+    const { userDAO } = DAOFactory(dbType, dbInstance);
 
-    // Buscar usuario por ID
+    // 2. check if the user exists
     const existingUser = await userDAO.findUserById(userId);
     if (!existingUser) {
       return res.status(404).json({ message: 'Usuario no encontrado' });
     }
 
-    const keycloakId = existingUser.keycloak_id;
-
-    // Obtener token de administrador de Keycloak
+    // 3. update keycloak information
     const adminToken = await getAdminToken();
-
-    // Actualizar el correo electrónico en Keycloak
-    await axios.put(
-      `${process.env.KEYCLOAK_URL}/admin/realms/${process.env.KEYCLOAK_REALM}/users/${keycloakId}`,
-      {
-        email,
-        lastName: "-",
-      },
-      {
-        headers: {
-          Authorization: `Bearer ${adminToken}`,
-          "Content-Type": "application/json",
-        },
-      }
+    await KeycloakService.updateKeycloakUser(
+      existingUser.keycloak_id,
+      email,
+      role,
+      adminToken
     );
 
-    // Obtener roles actuales del usuario en Keycloak
-    const currentRolesResponse = await axios.get(
-      `${process.env.KEYCLOAK_URL}/admin/realms/${process.env.KEYCLOAK_REALM}/users/${keycloakId}/role-mappings/realm`,
-      {
-        headers: {
-          Authorization: `Bearer ${adminToken}`,
-        },
-      }
-    );
-
-    // Eliminar roles actuales en Keycloak
-    if (currentRolesResponse.data.length > 0) {
-      await axios.delete(
-        `${process.env.KEYCLOAK_URL}/admin/realms/${process.env.KEYCLOAK_REALM}/users/${keycloakId}/role-mappings/realm`,
-        {
-          headers: {
-            Authorization: `Bearer ${adminToken}`,
-          },
-          data: currentRolesResponse.data,
-        }
-      );
-    }
-
-    // Asignar nuevo rol en Keycloak
-    const newRoleResponse = await axios.get(
-      `${process.env.KEYCLOAK_URL}/admin/realms/${process.env.KEYCLOAK_REALM}/roles/${role}`,
-      {
-        headers: { Authorization: `Bearer ${adminToken}` },
-      }
-    );
-
-    await axios.post(
-      `${process.env.KEYCLOAK_URL}/admin/realms/${process.env.KEYCLOAK_REALM}/users/${keycloakId}/role-mappings/realm`,
-      [newRoleResponse.data],
-      {
-        headers: { Authorization: `Bearer ${adminToken}` },
-      }
-    );
-
-    // Actualizar usuario en la base de datos
+    // 4. update db information
     const updatedUser = await userDAO.updateUser(userId, email, role);
-
+    
+    // 5. remove cache and return updated user
+    await redisClient.del(`user:${updatedUser.keycloak_id}`);
     res.json(updatedUser);
   } catch (error) {
     console.error('Error actualizando usuario:', error.response?.data || error.message);
@@ -324,41 +289,36 @@ const updateUser = async (req, res) => {
   }
 };
 
+/* --------------------------------------------------------------------- */
+// DELETE - DELETE USER BY ID
 
 const deleteUser = async (req, res) => {
   const userId = req.params.id;
 
   try {
-    const dbType = process.env.DB_TYPE;                                                             // 'postgres' o 'mongo'
-    const dbInstance = dbType === 'mongo' ? await require('./dbMongo')() : null;                    // Instancia de MongoDB si es necesario
-    const { userDAO } = DAOFactory(dbType, dbInstance);                                             // Obtiene el DAO dinámico
+    // 1. get current db and user information
+    const dbType = process.env.DB_TYPE;
+    const dbInstance = dbType === 'mongo' ? await require('./dbMongo')() : null;
+    const { userDAO } = DAOFactory(dbType, dbInstance);
 
-    // Buscar usuario por ID
+    // 2. check if user exists
     const existingUser = await userDAO.findUserById(userId);
     if (!existingUser) {
       return res.status(404).json({ message: 'Usuario no encontrado.' });
     }
 
-    const keycloakId = existingUser.keycloak_id;
-
-    // Obtener token de administrador de Keycloak
+    // 3. delete keycloak information
     const adminToken = await getAdminToken();
+    await KeycloakService.deleteKeycloakUser(existingUser.keycloak_id, adminToken);
 
-    // Eliminar usuario en Keycloak
-    await axios.delete(
-      `${process.env.KEYCLOAK_URL}/admin/realms/${process.env.KEYCLOAK_REALM}/users/${keycloakId}`,
-      {
-        headers: { Authorization: `Bearer ${adminToken}` },
-      }
-    );
+    // 4. delete db information
+    const deletedUser = await userDAO.deleteUser(userId);
 
-    // Eliminar usuario en la base de datos
-    await userDAO.deleteUser(userId);
-
-    res.json({ message: 'Usuario eliminado correctamente' });
+    await redisClient.del(`user:${deletedUser.keycloak_id}`);
+    res.json({ message: 'Usuario eliminado correctamente', user: deletedUser });
   } catch (error) {
-    console.error('Error eliminando usuario:', error.response?.data || error.message);
-    res.status(500).json({ message: 'Error eliminando usuario', error });
+    console.error('Error eliminando usuario:', error);
+    res.status(500).json({ message: 'Error eliminando usuario', error: error.message || error });
   }
 };
 
@@ -477,13 +437,10 @@ const getMenu = async (req, res) => {
     
     const menu = await menuDAO.getMenu(req.params.id);                                              // get the menu from db
 
-    if (!menu) {                                                                                    // if menu is not found
-      return res.status(404).json({ message: 'Menú no encontrado' });                               // return 404
-    }
+    if (!menu) return res.status(404).json({ message: 'Menú no encontrado' });                      // if no menu found, return 404
 
     // 3. save info in redis
     await redisClient.setex(cacheKey, cacheExpiration, JSON.stringify(menu));                       // save info in cache with expiration time
-    res.set('X-Cache', 'MISS');
     res.json(menu);                                                                                 // return the menu
   } catch (error) {                                                                                 // if there is an error
     console.error('Error obteniendo menú:', error);                                                 // log the error
