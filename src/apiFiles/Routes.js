@@ -1,5 +1,5 @@
 const express = require('express');
-const {registerUser,cloneUserToMongo,loginUser,getUser,updateUser,deleteUser,registerMenu,getMenu,updateMenu,deleteMenu,getOrder,registerRestaurant,getRestaurants,registerReservation,deleteReservation,registerOrder} = require('./Controller');
+const {registerUser,cloneUserToMongo,loginUser,getUser,updateUser,deleteUser,registerMenu,getMenu,updateMenu,deleteMenu,getOrder,registerRestaurant,getRestaurants,registerReservation,getReservation,deleteReservation,registerOrder} = require('./Controller');
 const {authenticateJWT,isAdmin,canEdit} = require('./Middleware');
 
 const router = express.Router();
@@ -26,6 +26,7 @@ router.delete('/menus/:id', authenticateJWT, isAdmin, deleteMenu);
 
 // CRUD de reservaciones
 router.post('/reservations', authenticateJWT, registerReservation);
+router.get('/reservations/:id', authenticateJWT, getReservation);
 router.delete('/reservations/:id', authenticateJWT, deleteReservation);
 
 // CRUD de pedido

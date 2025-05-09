@@ -371,7 +371,7 @@ const deleteUser = async (req, res) => {
  */
 
 /* --------------------------------------------------------------------- */
-// POST - REGISTER RESTAURANT
+// POST - CREATE RESTAURANT
 
 const registerRestaurant = async (req, res) => {
   const { name, address, phone, owner_id } = req.body;
@@ -389,10 +389,7 @@ const registerRestaurant = async (req, res) => {
     res.status(201).json(newRestaurant);                                                            // answer with the new restaurant
   } catch (error) {
     console.error("Error al registrar restaurante:", error);                                        // log the error
-    res.status(500).json({                                                                          // and answer with a 500 error
-      message: "Error registrando restaurante", 
-      error: error.message || error 
-    });
+    res.status(500).json({ message: "Error registrando restaurante", error: error.message || error });
   }
 };
 
@@ -424,10 +421,7 @@ const getRestaurants = async (req, res) => {
     res.json(restaurants);                                                                          // return the restaurants
   } catch (error) {                                                                                 // if there is an error
     console.error('Error obteniendo restaurantes:', error);                                         // log the error
-    res.status(500).json({                                                                          // and return a 500 error
-      message: 'Error obteniendo restaurantes',
-      error: error.message || error
-    });
+    res.status(500).json({ message: 'Error obteniendo restaurantes', error: error.message || error });
   }
 };
 
@@ -473,7 +467,6 @@ const getMenu = async (req, res) => {
     const cachedMenu = await redisClient.get(cacheKey);                                             // get info from cache
     if (cachedMenu) {                                                                               // if info is in cache
       console.log("Got menu from Redis");                                                           // log a message
-      res.set('X-Cache', 'HIT');
       return res.json(JSON.parse(cachedMenu));                                                      // return the cached info
     }
 
@@ -494,10 +487,7 @@ const getMenu = async (req, res) => {
     res.json(menu);                                                                                 // return the menu
   } catch (error) {                                                                                 // if there is an error
     console.error('Error obteniendo menú:', error);                                                 // log the error
-    res.status(500).json({                                                                          // and return 500 error
-      message: 'Error obteniendo menú', 
-      error: error.message || error 
-    }); 
+    res.status(500).json({ message: 'Error obteniendo menú', error: error.message || error }); 
   }
 };
 
@@ -543,31 +533,73 @@ const deleteMenu = async (req, res) => {
 /* ============================================================================================== */
 // RESERVATIONS
 
+/* Handles all reservation-related operations:
+ * - Reservation registration (POST)
+ * - Reservation deletion (DELETE)
+ */
+
+/* --------------------------------------------------------------------- */
+// POST - CREATE RESERVATION
+
 const registerReservation = async (req, res) => {
-  const { user_id, restaurant_id, reservation_time } = req.body;
+  const { user_id, restaurant_id, reservation_time } = req.body;                                    // extract reservation data from request body
+
   try {
-    const dbType = process.env.DB_TYPE; 
-    const dbInstance = dbType === 'mongo' ? await require('./dbMongo')() : null; 
-    const { reservationDAO } = DAOFactory(dbType, dbInstance); 
+    const dbType = process.env.DB_TYPE;                                                             // type of db currently using (postgres or mongo)
+    const dbInstance = dbType === 'mongo' ? await require('./dbMongo')() : null;                    // initialize process
+    const { reservationDAO } = DAOFactory(dbType, dbInstance);                                      // get DAO instance for reservations
 
-    
-    const newReservation = await reservationDAO.registerReservation(user_id, restaurant_id, reservation_time);
-
-    res.status(201).json(newReservation);
+    const newReservation = await reservationDAO.registerReservation(user_id, restaurant_id, reservation_time); // register new reservation in db
+    res.status(201).json(newReservation);                                                           // return new reservation
   } catch (error) {
-    console.error('Error registrando reserva:', error);
+    console.error('Error registrando reserva:', error);                                             // log the error
     res.status(500).json({ message: 'Error registrando reserva', error: error.message || error });
   }
 };
+
+/* --------------------------------------------------------------------- */
+// GET - RESERVATION BY ID
+
+const getReservation = async (req, res) => {
+  const cacheKey = `reservation:${req.params.id}`;                                                  // create cache key for reservation
+  const cacheExpiration = 300;                                                                      // cache expiration time in seconds (5 minutes)
+
+  try {
+    const cachedReservation = await redisClient.get(cacheKey);                                      // retrieve reservation from cache
+    if (cachedReservation) {                                                                        // if reservation is cached
+      console.log("Got reservation from Redis");                                                    // log a message
+      return res.json(JSON.parse(cachedReservation));                                               // return cached reservation
+    }
+
+    // 2. if there is no cache for this, look in db
+    const dbType = process.env.DB_TYPE;                                                             // type of db currently using (postgres or mongo)
+    const dbInstance = dbType === 'mongo' ? await require('./dbMongo')() : null;                    // initialize process
+    const { reservationDAO } = DAOFactory(dbType, dbInstance);                                      // get DAO instance for reservations
+    
+    const reservation = await reservationDAO.getReservation(req.params.id);                         // retrieve reservation from db
+    if (!reservation) return res.status(404).json({ message: 'Reserva no encontrada' });            // if reservation is not found, return 404
+
+    // 3. save info in redis
+    await redisClient.setex(cacheKey, cacheExpiration, JSON.stringify(reservation));                // save reservation in cache with expiration time
+    console.log("Saved reservation to Redis");                                                      // log a message
+    res.json(reservation);                                                                          // return reservation
+  } catch (error) {
+    console.error('Error obteniendo reserva:', error);
+    res.status(500).json({ message: 'Error obteniendo reserva', error: error.message || error });
+  }
+};
+
+/* --------------------------------------------------------------------- */
+// DELETE - DELETE RESERVATION BY ID
 
 const deleteReservation = async (req, res) => {
   try {
     const dbType = process.env.DB_TYPE; 
     const dbInstance = dbType === 'mongo' ? await require('./dbMongo')() : null; 
     const { reservationDAO } = DAOFactory(dbType, dbInstance); 
-
     
     const deletedReservation = await reservationDAO.deleteReservation(req.params.id);
+    await redisClient.del(`reservation:${deletedReservation.id}`);
 
     res.json({ message: 'Reservación eliminada correctamente.', reservation: deletedReservation });
   } catch (error) {
@@ -616,4 +648,6 @@ const getOrder = async (req, res) => {
   }
 };
 
-module.exports = {registerUser,cloneUserToMongo,loginUser,getUser,updateUser,deleteUser,registerMenu,getMenu,updateMenu,deleteMenu,getOrder,registerRestaurant,getRestaurants,registerReservation,deleteReservation,registerOrder};
+module.exports = {registerUser, cloneUserToMongo, loginUser, getUser, updateUser, deleteUser,
+  registerMenu, getMenu, updateMenu, deleteMenu, getOrder, registerRestaurant, getRestaurants,
+  registerReservation, getReservation, deleteReservation, registerOrder};
