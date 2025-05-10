@@ -96,7 +96,7 @@ services:
   mongos:
     image: mongo
     container_name: mongos
-    command: mongos --configdb configReplSet/mongo-config1:27017,mongo-config2:27017,mongo-config3:27017 --port 27017
+    command: mongos --configdb configReplSet/mongo-config1:27017,mongo-config2:27017,mongo-config3:27017 --bind_ip_all --port 27017
     ports:
       - "27018:27017"
     depends_on:
@@ -176,6 +176,8 @@ services:
   # Servicio API
   api:
     build: .
+    env_file:
+      - .env
     environment:
       DB_USER: postgres
       DB_PASSWORD: mitzy
