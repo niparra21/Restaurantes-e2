@@ -11,22 +11,24 @@ services:
       - "5432:5432"
     volumes:
       - db-data:/var/lib/postgresql/data
-      - ./init.sql:/docker-entrypoint-initdb.d/init.sql 
+      - ./init.sql:/docker-entrypoint-initdb.d/init.sql
     networks:
       - backend-network
-  
-  # Mongo
-  mongo:
+
+  # MongoDB Shard Nodes
+  mongors1n1:
+    container_name: mongors1n1
     image: mongo
-    container_name: mongo
-    environment:
-      MONGO_INITDB_ROOT_USERNAME: ${MONGO_INITDB_ROOT_USERNAME}
-      MONGO_INITDB_ROOT_PASSWORD: ${MONGO_INITDB_ROOT_PASSWORD}
-      MONGO_INITDB_DATABASE: ${MONGO_INITDB_DATABASE}
+    command: mongod --shardsvr --replSet mongors1 --dbpath /data/db --port 27017
     ports:
-      - "27017:27017"
+      - 27017:27017
+    expose:
+      - "27017"
+    environment:
+      TERM: xterm
     volumes:
-      - mongo-data:/data/db
+      - /etc/localtime:/etc/localtime:ro
+      - data1:/data/db
     networks:
       - backend-network
 
@@ -42,6 +44,109 @@ services:
     restart: unless-stopped
     networks:
       - backend-network
+
+  mongors1n2:
+    container_name: mongors1n2
+    image: mongo
+    command: mongod --shardsvr --replSet mongors1 --dbpath /data/db --port 27017
+    ports:
+      - 27027:27017
+    expose:
+      - "27017"
+    environment:
+      TERM: xterm
+    volumes:
+      - /etc/localtime:/etc/localtime:ro
+      - data2:/data/db
+    networks:
+      - backend-network
+
+  mongors1n3:
+    container_name: mongors1n3
+    image: mongo
+    command: mongod --shardsvr --replSet mongors1 --dbpath /data/db --port 27017
+    ports:
+      - 27037:27017
+    expose:
+      - "27017"
+    environment:
+      TERM: xterm
+    volumes:
+      - /etc/localtime:/etc/localtime:ro
+      - data3:/data/db
+    networks:
+      - backend-network
+
+  # Config Servers (Replica Set de 3 nodos)
+  mongo-config1:
+    image: mongo
+    container_name: mongo-config1
+    command: mongod --configsvr --replSet configReplSet --dbpath /data/configdb --port 27017
+    networks:
+      - backend-network
+    volumes:
+      - config-data1:/data/configdb
+
+  mongo-config2:
+    image: mongo
+    container_name: mongo-config2
+    command: mongod --configsvr --replSet configReplSet --dbpath /data/configdb --port 27017
+    networks:
+      - backend-network
+    volumes:
+      - config-data2:/data/configdb
+
+  mongo-config3:
+    image: mongo
+    container_name: mongo-config3
+    command: mongod --configsvr --replSet configReplSet --dbpath /data/configdb --port 27017
+    networks:
+      - backend-network
+    volumes:
+      - config-data3:/data/configdb
+
+  # MongoDB Router
+  mongos:
+    image: mongo
+    container_name: mongos
+    command: mongos --configdb configReplSet/mongo-config1:27017,mongo-config2:27017,mongo-config3:27017 --bind_ip_all --port 27017
+    ports:
+      - "27018:27017"
+    depends_on:
+      - mongo-config1
+      - mongo-config2
+      - mongo-config3
+      - mongors1n1
+      - mongors1n2
+      - mongors1n3
+    networks:
+      - backend-network
+
+# MongoDB Initialization
+  # mongo-init:
+  #   image: mongo:6.0
+  #   container_name: mongo-init
+  #   depends_on:
+  #     - mongo-config1
+  #     - mongo-config2
+  #     - mongo-config3
+  #     - mongors1n1
+  #     - mongors1n2
+  #     - mongors1n3
+  #     - mongos
+  #   volumes:
+  #     - ./mongo-init/init-config.js:/init-config.js
+  #     - ./mongo-init/init-shard.js:/init-shard.js
+  #     - ./mongo-init/init-sharding.js:/init-sharding.js
+  #   command: >
+  #     bash -c "
+  #       sleep 40 &&
+  #       mongosh --host mongo-config1:27017 /init-config.js &&
+  #       mongosh --host mongors1n1:27017 /init-shard.js &&
+  #       mongosh --host mongos:27017 /init-sharding.js
+  #     "
+  #   networks:
+  #     - backend-network
 
   # Base de datos para Keycloak
   keycloak-db:
@@ -84,6 +189,8 @@ services:
   # Servicio API
   api:
     build: .
+    env_file:
+      - .env
     environment:
       DB_USER: postgres
       DB_PASSWORD: mitzy
@@ -101,6 +208,7 @@ services:
       - db
       - keycloak
       - redis
+      - mongos
     networks:
       - backend-network
 
@@ -111,8 +219,17 @@ volumes:
   mongo-data:
   keycloak-db-data:
   keycloak-data:
+  data1:
+  data2:
+  data3:
+  config-data1:
+  config-data2:
+  config-data3:
 
 # Configuración de red
 networks:
   backend-network:
     driver: bridge
+
+
+
