@@ -22,6 +22,7 @@ app.use(keycloak.middleware());
 
 app.use("/api", routes);
 
+
 app.get("/", (req, res) => {
     res.send("API funcionando correctamente!");
 });
