@@ -594,6 +594,9 @@ const registerOrder = async (req, res) => {
   }
 };
 
+/* --------------------------------------------------------------------- */
+// GET - GET ORDER BY ID
+
 const getOrder = async (req, res) => {
   const cacheKey = `order:${req.params.id}`;                                                        // create cache key for order
   const cacheExpiration = 300;                                                                      // cache expiration time in seconds (5 minutes)
@@ -624,6 +627,89 @@ const getOrder = async (req, res) => {
   }
 };
 
-module.exports = {registerUser, cloneUserToMongo, loginUser, getUser, updateUser, deleteUser,
+/* ============================================================================================== */
+// PRODUCTS
+
+/* Handles all product-related operations:
+ * - Product registration (POST)
+ * - Products information (GET)
+ * - Product deletion (DELETE)
+ */
+
+/* --------------------------------------------------------------------- */
+// POST - CREATE PRODUCT
+
+const registerProduct = async (req, res) => {
+  const { name, description, price, category, restaurant_id, is_active } = req.body;
+  
+  try {
+    const dbType = process.env.DB_TYPE;
+    const dbInstance = dbType === 'mongo' ? await require('./dbMongo')() : null;
+    const { productDAO } = DAOFactory(dbType, dbInstance);
+
+    const newProduct = await productDAO.registerProduct( name, description || 'Producto sin descripción', price, category, restaurant_id, is_active );
+
+    await redisClient.del('products:all');
+    res.status(201).json(newProduct);
+  } catch (error) {
+    console.error('Error registrando producto:', error);
+    res.status(500).json({ message: 'Error registrando producto', error: error.message || error });
+  }
+};
+
+/* --------------------------------------------------------------------- */
+// GET - ALL PRODUCTS
+
+const getProducts = async (req, res) => {
+  const cacheKey = 'products:all';                                                                  // unique key for this query
+  const cacheExpiration = 300;                                                                      // expiration time = 5 minutes in seconds
+
+  try {
+    // 1. try to connect to redis
+    const cachedProducts = await redisClient.get(cacheKey);                                         // get info from cache
+    if (cachedProducts) {                                                                           // if info is in cache
+      console.log('Got products from Redis');                                                       // log a message
+      res.json(JSON.parse(cachedProducts));                                                         // return cached products
+    }
+
+    // 2. if there is no cache for this, look in db
+    const dbType = process.env.DB_TYPE;                                                             // type of db currently using (postgres or mongo)
+    const dbInstance = dbType === 'mongo' ? await require('./dbMongo')() : null;                    // initialize process
+    const { productDAO } = DAOFactory(dbType, dbInstance);                                          // get product DAO
+
+    const products = await productDAO.getProducts();                                                // call the DAO's method to get products
+
+    // 3. save info in Redis
+    await redisClient.setex(cacheKey, cacheExpiration, JSON.stringify(products));                   // save info in Redis with expiration time
+    console.log('Stored restaurants in Redis');                                                     // log a message
+    res.json(products);                                                                             // return products
+  } catch (error) {                                                                                 // if there is an error
+    console.error('Error obtiendo productos:', error);                                              // log the error
+    res.status(500).json({ message: 'Error obtiendo productos', error: error.message || error });   // return error
+  }
+};
+
+/* --------------------------------------------------------------------- */
+// DELETE - PRODUCT BY ID
+
+const deleteProduct = async (req, res) => {
+  try {
+    const dbType = process.env.DB_TYPE; 
+    const dbInstance = dbType === 'mongo' ? await require('./dbMongo')() : null; 
+    const { productDAO } = DAOFactory(dbType, dbInstance); 
+
+    const deletedProduct = await productDAO.deleteProduct(req.params.id);
+    await redisClient.del('products:all');
+    //await redisClient.del(`product:${deletedProduct.id}`);
+
+    res.json({ message: 'Producto eliminado correctamente.', product: deletedProduct });
+  } catch (error) {
+    console.error('Error eliminando producto:', error);
+    res.status(500).json({ message: 'Error eliminando producto', error: error.message || error });
+  }
+};
+
+module.exports = { registerUser, cloneUserToMongo, loginUser, getUser, updateUser, deleteUser,
   registerMenu, getMenu, updateMenu, deleteMenu, getOrder, registerRestaurant, getRestaurants,
-  registerReservation, getReservation, deleteReservation, registerOrder};
+  registerReservation, getReservation, deleteReservation, registerOrder, registerProduct, getProducts,
+  deleteProduct };
