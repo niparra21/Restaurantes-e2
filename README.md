@@ -110,6 +110,6 @@ sh.addShard("mongors1/mongors1n1:27017,mongors1n2:27017,mongors1n3:27017")
 sh.enableSharding("Restaurante")
 sh.shardCollection("Restaurante.products", { product_id: 1 })
 sh.shardCollection("Restaurante.reservations", { reservation_id: 1 })
-sh.status() // Verify shard, database, and collections
+sh.status() // Verify shard, database, and collections .
 
 ```
