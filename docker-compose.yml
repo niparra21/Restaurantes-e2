@@ -11,7 +11,7 @@ services:
       - "5432:5432"
     volumes:
       - db-data:/var/lib/postgresql/data
-      - ./init.sql:/docker-entrypoint-initdb.d/init.sql
+      - ./db/postgres-init.sql:/docker-entrypoint-initdb.d/postgres-init.sql
     networks:
       - backend-network
 
@@ -250,6 +250,3 @@ volumes:
 networks:
   backend-network:
     driver: bridge
-
-
-
