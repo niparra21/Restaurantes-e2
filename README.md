@@ -114,6 +114,47 @@ sh.status() // Verify shard, database, and collections
 
 ```
 
+## CI/CD con GitHub Actions
+
+Este proyecto incluye una integración continua básica usando **GitHub Actions**.
+
+### Estructura
+
+El flujo de trabajo se encuentra en:
+
+.github/workflows/ci.yml
+
+markdown
+Copiar
+Editar
+
+### ¿Qué hace el workflow?
+
+1. Ejecuta los tests definidos con Jest (`npm test`)
+2. Construye la imagen Docker del backend
+3. La sube automáticamente a Docker Hub si los tests pasan
+
+### Configuración requerida en GitHub
+
+Ve a tu repositorio → *Settings* → *Secrets and variables* → *Actions* y agrega:
+
+| Variable          | Descripción                         |
+|-------------------|-------------------------------------|
+| `DOCKER_USERNAME` | Tu usuario de Docker Hub            |
+| `DOCKER_PASSWORD` | Tu contraseña o token de Docker Hub |
+
+### Convención para los tags
+
+La imagen se sube como:
+
+docker.io/<tu_usuario>/restaurantes-e2:latest
+
+makefile
+Copiar
+Editar
+
+Puedes modificar el nombre y tag directamente en el archivo `ci.yml`.
+
 
 ##  Despliegue y Escalabilidad
 
