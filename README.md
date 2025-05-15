@@ -113,3 +113,60 @@ sh.shardCollection("Restaurante.reservations", { reservation_id: 1 })
 sh.status() // Verify shard, database, and collections
 
 ```
+
+
+##  Despliegue y Escalabilidad
+
+###  Requisitos previos
+
+- Docker y Docker Compose instalados
+- Archivo `.env` configurado con las variables necesarias:
+  
+Levantar todo el sistema
+
+* docker-compose up -d --build
+
+Esto desplegará:
+
+1. PostgreSQL y MongoDB con replicación y sharding
+2. Redis
+3. Keycloak + su base de datos
+4. NGINX como balanceador de carga
+5. Dos instancias del backend: api1 y api2
+6. Servicio de búsqueda (dummy)
+
+
+### Escalabilidad
+
+Se levantan dos instancias del backend (api1, api2), accesibles a través de NGINX en:
+
+* http://localhost/api/
+
+Puedes probar la distribución de carga con:
+
+* while true; do curl http://localhost/api/ping; sleep 1; done
+
+Y verás que las respuestas alternan entre los contenedores gracias al round-robin configurado en NGINX.
+
+Balanceador de carga (NGINX)
+El archivo nginx.conf contiene:
+
+upstream api_backend {
+  server api1:5000;
+  server api2:5000;
+}
+
+server {
+  listen 80;
+
+  location /api/ {
+    proxy_pass http://api_backend;
+  }
+
+  location /search/ {
+    proxy_pass http://search_backend;
+  }
+}
+
+La ruta /api/ balancea entre instancias, mientras que /search/ redirige a un servicio de prueba.
+
