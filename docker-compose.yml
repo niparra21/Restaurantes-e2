@@ -14,6 +14,11 @@ services:
       - ./db/postgres-init.sql:/docker-entrypoint-initdb.d/postgres-init.sql
     networks:
       - backend-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d Restaurante"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
 
   # MongoDB Shard Nodes
   mongors1n1:
@@ -29,19 +34,6 @@ services:
     volumes:
       - /etc/localtime:/etc/localtime:ro
       - data1:/data/db
-    networks:
-      - backend-network
-
-  # Redis
-  redis:
-    image: redis
-    ports:
-      - "6379:6379"
-    volumes:
-      - redis-data:/data
-    environment:
-      - REDIS_PASSWORD=${REDIS_PASSWORD}
-    restart: unless-stopped
     networks:
       - backend-network
 
@@ -122,31 +114,45 @@ services:
     networks:
       - backend-network
 
-# MongoDB Initialization
-  # mongo-init:
-  #   image: mongo:6.0
-  #   container_name: mongo-init
-  #   depends_on:
-  #     - mongo-config1
-  #     - mongo-config2
-  #     - mongo-config3
-  #     - mongors1n1
-  #     - mongors1n2
-  #     - mongors1n3
-  #     - mongos
-  #   volumes:
-  #     - ./mongo-init/init-config.js:/init-config.js
-  #     - ./mongo-init/init-shard.js:/init-shard.js
-  #     - ./mongo-init/init-sharding.js:/init-sharding.js
-  #   command: >
-  #     bash -c "
-  #       sleep 40 &&
-  #       mongosh --host mongo-config1:27017 /init-config.js &&
-  #       mongosh --host mongors1n1:27017 /init-shard.js &&
-  #       mongosh --host mongos:27017 /init-sharding.js
-  #     "
-  #   networks:
-  #     - backend-network
+  # Redis
+  redis:
+    image: redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis-data:/data
+    environment:
+      - REDIS_PASSWORD=${REDIS_PASSWORD}
+    restart: unless-stopped
+    networks:
+      - backend-network
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  # ElasticSearch
+  elasticsearch:
+    image: docker.elastic.co/elasticsearch/elasticsearch:7.17.28
+    container_name: elasticsearch  # Explicit container name
+    environment:
+      - discovery.type=single-node
+      - xpack.security.enabled=false
+      - ES_JAVA_OPTS=-Xms512m -Xmx512m  # Reduce memoria si es necesario
+      - http.host=0.0.0.0  # Aceptar conexiones externas
+      - transport.host=0.0.0.0
+    ports:
+      - "9200:9200"
+    volumes:
+      - es-data:/usr/share/elasticsearch/data
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:9200/_cluster/health || exit 1"]
+      interval: 10s
+      timeout: 10s
+      retries: 10
+    networks:
+      - backend-network
 
   # Base de datos para Keycloak
   keycloak-db:
@@ -169,6 +175,7 @@ services:
   keycloak:
     image: quay.io/keycloak/keycloak:24.0.1
     command: start-dev
+    #command: start-dev --import-realm
     environment:
       KC_DB: postgres
       KC_DB_URL: jdbc:postgresql://keycloak-db:5432/keycloak
@@ -180,6 +187,7 @@ services:
       - "8080:8080"
     volumes:
       - keycloak-data:/opt/keycloak/data
+      #- ./keycloak-realm:/opt/keycloak/data/import
     depends_on:
       keycloak-db:
         condition: service_healthy
@@ -221,13 +229,16 @@ services:
       KEYCLOAK_CLIENT_ID: api-restaurantes
       JWT_SECRET: your_jwt_secret
       REDIS_URL: redis://:${REDIS_PASSWORD}@redis:6379
+      ELASTICSEARCH_URL: http://elasticsearch:9200
     ports:
       - "5000:5000"
     depends_on:
-      - db
-      - keycloak
-      - redis
-      - mongos
+      elasticsearch:
+        condition: service_healthy
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
     networks:
       - backend-network
 
@@ -245,6 +256,7 @@ volumes:
   config-data1:
   config-data2:
   config-data3:
+  es-data:
 
 # Configuración de red
 networks:

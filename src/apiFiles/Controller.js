@@ -24,7 +24,8 @@ const { getAdminToken } = require('./keycloak')
 
 app.use(express.json());
 
-const redisClient = new redis(process.env.REDIS_URL || 'redis://localhost:6379');
+const redisClient = new redis(process.env.REDIS_URL);
+const elasticClient = require('../../elastic-search/elasticsearchClient');
 
 /* ============================================================================================== */
 // AUTHENTICATION
@@ -628,6 +629,46 @@ const getOrder = async (req, res) => {
 };
 
 /* ============================================================================================== */
+// ELASTIC SEARCH INDEXING
+
+/* --------------------------------------------------------------------- */
+// INDEX PRODUCT
+
+const indexProduct = async(product) => {
+  try {
+    await elasticClient.index({
+      index: 'products',
+      id: product.id.toString(),
+      body: {
+        name: product.name,
+        description: product.description,
+        category: product.category,
+        restaurant_id: product.restaurant_id,
+        db_id: product.id.toString(),
+      }
+    });
+  } catch (error) {
+    console.error('Error indexando producto en ElasticSearch:', error);
+  }
+};
+
+/* --------------------------------------------------------------------- */
+// DELETE PRODUCT FROM ELASTIC
+
+const deleteFromElastic = async (productId) => {
+  try {
+    await elasticClient.delete({
+      index: 'products',
+      id: productId.toString()
+    });
+  } catch (error) {
+    if (error.meta?.statusCode !== 404) {
+      console.error('Error eliminando producto de ElasticSearch:', error);
+    }
+  }
+}
+
+/* ============================================================================================== */
 // PRODUCTS
 
 /* Handles all product-related operations:
@@ -648,6 +689,8 @@ const registerProduct = async (req, res) => {
     const { productDAO } = DAOFactory(dbType, dbInstance);
 
     const newProduct = await productDAO.registerProduct( name, description || 'Producto sin descripción', price, category, restaurant_id, is_active );
+
+    await indexProduct(newProduct);
 
     await redisClient.del('products:all');
     res.status(201).json(newProduct);
@@ -699,6 +742,8 @@ const deleteProduct = async (req, res) => {
     const { productDAO } = DAOFactory(dbType, dbInstance); 
 
     const deletedProduct = await productDAO.deleteProduct(req.params.id);
+
+    await deleteFromElastic(deletedProduct.id);
     await redisClient.del('products:all');
     //await redisClient.del(`product:${deletedProduct.id}`);
 
@@ -709,7 +754,65 @@ const deleteProduct = async (req, res) => {
   }
 };
 
+/* --------------------------------------------------------------------- */
+// GET - SEARCH PRODUCTS
+
+const searchProducts = async (req, res) => {
+  const { q, category } = req.query;
+  
+  try {
+    let query = {};
+    
+    if (q && category) {
+      query = {
+        bool: {
+          must: [
+            { match: { name: q } },
+            { term: { category: category.toLowerCase() } }
+          ]
+        }
+      };
+    } else if (q) {
+      query = {
+        multi_match: {
+          query: q,
+          fields: ['name^3', 'description', 'category'],
+          fuzziness: 'AUTO'
+        }
+      };
+    } else if (category) {
+      query = { term: { category: category.toLowerCase() } };
+    } else {
+      return res.status(400).json({ message: 'Debe proporcionar término de búsqueda (q) o categoría' });
+    }
+
+    const { body } = await elasticClient.search({
+      index: 'products',
+      body: {
+        query: query,
+        highlight: {
+          fields: {
+            name: {},
+            description: {}
+          }
+        }
+      }
+    });
+
+    const results = body.hits.hits.map(hit => ({
+      id: hit._source.db_id,
+      ...hit._source,
+      highlight: hit.highlight
+    }));
+
+    res.json(results);
+  } catch (error) {
+    console.error('Error buscando productos:', error);
+    res.status(500).json({ message: 'Error buscando productos', error: error.message || error });
+  }
+};
+
 module.exports = { registerUser, cloneUserToMongo, loginUser, getUser, updateUser, deleteUser,
   registerMenu, getMenu, updateMenu, deleteMenu, getOrder, registerRestaurant, getRestaurants,
   registerReservation, getReservation, deleteReservation, registerOrder, registerProduct, getProducts,
-  deleteProduct };
+  deleteProduct, searchProducts };

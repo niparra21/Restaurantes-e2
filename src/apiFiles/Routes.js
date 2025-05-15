@@ -1,7 +1,7 @@
 const express = require('express');
 const { registerUser, cloneUserToMongo, loginUser, getUser, updateUser, deleteUser, registerMenu, getMenu,
   updateMenu, deleteMenu, getOrder, registerRestaurant, getRestaurants, registerReservation, getReservation, 
-  deleteReservation, registerOrder, registerProduct, getProducts, deleteProduct } = require('./Controller');
+  deleteReservation, registerOrder, registerProduct, getProducts, deleteProduct, searchProducts } = require('./Controller');
 const { authenticateJWT, isAdmin, canEdit } = require('./Middleware');
 
 const router = express.Router();
@@ -39,6 +39,9 @@ router.get('/orders/:id', authenticateJWT, getOrder);
 router.post('/products', authenticateJWT, isAdmin, registerProduct);
 router.get('/products', authenticateJWT, isAdmin, getProducts);
 router.delete('/products/:id', authenticateJWT, isAdmin, deleteProduct);
+
+// ELASTIC
+router.get('/search/products', authenticateJWT, searchProducts);
 
 router.get('/', (req, res) => {
     res.send('API funcionando correctamente en /api');
