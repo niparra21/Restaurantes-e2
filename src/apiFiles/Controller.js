@@ -419,34 +419,46 @@ const registerMenu = async (req, res) => {
 // GET - MENU BY ID
 
 const getMenu = async (req, res) => {
-  const cacheKey = `menu:${req.params.id}`;                                                         // unique cache key
-  const cacheExpiration = 300                                                                       // expiration time = 5 minutes in seconds
+  const cacheKey = `menu:${req.params.id}`;       // unique cache key
+  const cacheExpiration = 300;                    // expiration time = 5 minutes in seconds
 
   try {
     // 1. try to connect to redis
-    const cachedMenu = await redisClient.get(cacheKey);                                             // get info from cache
-    if (cachedMenu) {                                                                               // if info is in cache
-      console.log("Got menu from Redis");                                                           // log a message
-      return res.json(JSON.parse(cachedMenu));                                                      // return the cached info
+    const cachedMenu = await redisClient.get(cacheKey);
+    if (cachedMenu) {
+      console.log("Got menu from Redis");
+      return res.json({
+        ...JSON.parse(cachedMenu),
+        container: process.env.HOSTNAME
+      });
     }
 
     // 2. if there is no cache for this, look in db
-    const dbType = process.env.DB_TYPE;                                                             // type of db currently using (postgres or mongo)
-    const dbInstance = dbType === 'mongo' ? await require('./dbMongo')() : null;                    // initialize process
-    const { menuDAO } = DAOFactory(dbType, dbInstance);                                             // get the DAO
+    const dbType = process.env.DB_TYPE;
+    const dbInstance = dbType === 'mongo' ? await require('./dbMongo')() : null;
+    const { menuDAO } = DAOFactory(dbType, dbInstance);
     
-    const menu = await menuDAO.getMenu(req.params.id);                                              // get the menu from db
+    const menu = await menuDAO.getMenu(req.params.id);
 
-    if (!menu) return res.status(404).json({ message: 'Menú no encontrado' });                      // if no menu found, return 404
+    if (!menu) {
+      return res.status(404).json({ message: 'Menú no encontrado' });
+    }
 
     // 3. save info in redis
-    await redisClient.setex(cacheKey, cacheExpiration, JSON.stringify(menu));                       // save info in cache with expiration time
-    res.json(menu);                                                                                 // return the menu
-  } catch (error) {                                                                                 // if there is an error
-    console.error('Error obteniendo menú:', error);                                                 // log the error
-    res.status(500).json({ message: 'Error obteniendo menú', error: error.message || error }); 
+    await redisClient.setex(cacheKey, cacheExpiration, JSON.stringify(menu));
+
+    // 4. return response with container
+    res.json({
+      ...menu,
+      container: process.env.HOSTNAME
+    });
+
+  } catch (error) {
+    console.error('Error obteniendo menú:', error);
+    res.status(500).json({ message: 'Error obteniendo menú', error: error.message || error });
   }
 };
+
 
 /* --------------------------------------------------------------------- */
 // PUT - UPDATE MENU BY ID

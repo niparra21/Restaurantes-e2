@@ -193,7 +193,8 @@ services:
     volumes:
       - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
     depends_on:
-      - api
+      - api1
+      - api2
       - search   
     networks:
       - backend-network
@@ -206,11 +207,13 @@ services:
       - backend-network
 
   # Servicio API
-  api:
+  api1:
+    container_name: api1
     build: .
     env_file:
       - .env
     environment:
+      INSTANCE_NAME: api1
       DB_USER: postgres
       DB_PASSWORD: mitzy
       DB_NAME: Restaurante
@@ -222,7 +225,7 @@ services:
       JWT_SECRET: your_jwt_secret
       REDIS_URL: redis://:${REDIS_PASSWORD}@redis:6379
     ports:
-      - "5000:5000"
+      - "5001:5000"
     depends_on:
       - db
       - keycloak
@@ -231,6 +234,32 @@ services:
     networks:
       - backend-network
 
+  api2:
+    container_name: api2
+    build: .
+    env_file:
+      - .env
+    environment:
+      INSTANCE_NAME: api2
+      DB_USER: postgres
+      DB_PASSWORD: mitzy
+      DB_NAME: Restaurante
+      DB_HOST: db
+      DB_PORT: 5432
+      KEYCLOAK_URL: http://keycloak:8080
+      KEYCLOAK_REALM: reserva-restaurantes
+      KEYCLOAK_CLIENT_ID: api-restaurantes
+      JWT_SECRET: your_jwt_secret
+      REDIS_URL: redis://:${REDIS_PASSWORD}@redis:6379
+    ports:
+      - "5002:5000"
+    depends_on:
+      - db
+      - keycloak
+      - redis
+      - mongos
+    networks:
+      - backend-network
 
 # Configuración de volúmenes
 volumes:

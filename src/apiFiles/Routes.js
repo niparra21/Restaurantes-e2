@@ -37,4 +37,8 @@ router.get('/', (req, res) => {
     res.send('API funcionando correctamente en /api');
 });
 
+router.get('/ping', (req, res) => {
+  res.send('pong desde ' + process.env.HOSTNAME);
+});
+
 module.exports = router;
