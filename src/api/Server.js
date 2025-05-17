@@ -7,7 +7,7 @@ const express = require("express");
 const cors = require("cors");
 const session = require("express-session");
 const routes = require("./Routes");
-const { keycloak, memoryStore } = require("./keycloak");
+const { keycloak, memoryStore } = require("./shared/keycloak");
 require("dotenv").config();
 
 const app = express();

@@ -8,7 +8,7 @@ const app = express();
 
 app.use(express.json());
 
-const { elasticClient } = require('./elastic/elasticsearchClient');
+const { elasticClient } = require('./shared/elastic/elasticsearchClient');
 
 /* --------------------------------------------------------------------- */
 // GET - SEARCH PRODUCTS

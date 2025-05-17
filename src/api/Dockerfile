@@ -2,10 +2,11 @@ FROM node:18
 
 WORKDIR /usr/src/api
 
-COPY package*.json ./
+COPY src/api/package*.json ./
 RUN npm install
 
-COPY . .
+COPY src/api ./
+COPY src/shared ./shared
 
 EXPOSE 5000
 CMD ["node", "./Server.js"]

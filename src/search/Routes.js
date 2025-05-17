@@ -5,7 +5,7 @@
 
 const express = require('express');
 const { searchProducts } = require('./Controller');
-const { authenticateJWT, isAdmin, canEdit } = require('./Middleware');
+const { authenticateJWT, isAdmin, canEdit } = require('./shared/Middleware');
 
 const router = express.Router();
 

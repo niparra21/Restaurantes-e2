@@ -3,18 +3,18 @@
  * I Semestre - 2025
  */
 
-const UserDAOPostgres = require('./DAOS/Postgres/UserDAOPostgres');
-const RestaurantDAOPostgres = require('./DAOS/Postgres/RestaurantDAOPostgres');
-const MenuDAOPostgres = require('./DAOS/Postgres/MenuDAOPostgres');
-const OrderDAOPostgres = require('./DAOS/Postgres/OrderDAOPostgres');
-const ProductDAOPostgres = require('./DAOS/Postgres/ProductDAOPostgres');
-const ReservationDAOPostgres = require('./DAOS/Postgres/ReservationDAOPostgres');
+const UserDAOPostgres = require('./shared/DAOS/Postgres/UserDAOPostgres');
+const RestaurantDAOPostgres = require('./shared/DAOS/Postgres/RestaurantDAOPostgres');
+const MenuDAOPostgres = require('./shared/DAOS/Postgres/MenuDAOPostgres');
+const OrderDAOPostgres = require('./shared/DAOS/Postgres/OrderDAOPostgres');
+const ProductDAOPostgres = require('./shared/DAOS/Postgres/ProductDAOPostgres');
+const ReservationDAOPostgres = require('./shared/DAOS/Postgres/ReservationDAOPostgres');
 
-const UserDAOMongo = require('./DAOS/Mongo/UserDAOMongo');
-const RestaurantDAOMongo = require('./DAOS/Mongo/RestaurantDAOMongo');
-const MenuDAOMongo = require('./DAOS/Mongo/MenuDAOMongo');
-const OrderDAOMongo = require('./DAOS/Mongo/OrderDAOMongo');
-const ReservationDAOMongo = require('./DAOS/Mongo/ReservationDAOMongo');
+const UserDAOMongo = require('./shared/DAOS/Mongo/UserDAOMongo');
+const RestaurantDAOMongo = require('./shared/DAOS/Mongo/RestaurantDAOMongo');
+const MenuDAOMongo = require('./shared/DAOS/Mongo/MenuDAOMongo');
+const OrderDAOMongo = require('./shared/DAOS/Mongo/OrderDAOMongo');
+const ReservationDAOMongo = require('./shared/DAOS/Mongo/ReservationDAOMongo');
 
 function DAOFactory(dbType, dbInstance) {
   if (dbType === 'postgres') {

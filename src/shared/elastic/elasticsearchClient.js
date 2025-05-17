@@ -6,7 +6,7 @@
 const { Client } = require('@elastic/elasticsearch');
 
 const elasticClient = new Client({
-  node: process.env.ELASTICSEARCH_URL || 'http://elasticsearch:9200',
+  node: process.env.ELASTICSEARCH_URL,
   maxRetries: 5,
   requestTimeout: 60000
 });

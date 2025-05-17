@@ -5,9 +5,8 @@
 
 const express = require("express");
 const cors = require("cors");
-const { initElasticSearch } = require('./elastic/elasticsearchClient');
-const { reindexAllProducts } = require('./elastic/reindexProducts');
-const { searchProducts } = require("./Controller");
+const { initElasticSearch } = require('./shared/elastic/elasticsearchClient');
+const { reindexAllProducts } = require('./shared/elastic/reindexProducts');
 const routes = require("./Routes");
 
 const app = express();
@@ -24,7 +23,6 @@ const startServer = async () => {
     console.log('🔍 Conectando a ElasticSearch...');
     await initElasticSearch();
     
-    // Reindexar si es necesario
     if (process.env.REINDEX_ON_START === 'true') {
       console.log('🔍 Reindexando productos...');
       await reindexAllProducts();

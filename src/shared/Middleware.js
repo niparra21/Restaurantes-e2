@@ -10,7 +10,7 @@ const { getAdminToken } = require('./keycloak');
 const axios = require('axios');
 
 const client = jwksClient({
-  jwksUri: process.env.KEYCLOAK_JWKS_URI || 'http://localhost:8080/realms/restaurant/protocol/openid-connect/certs',
+  jwksUri: process.env.KEYCLOAK_JWKS_URI,
 });
 
 function getKey(header, callback) {

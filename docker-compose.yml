@@ -216,8 +216,8 @@ services:
   # Servicio API
   api:
     build:
-      context: ./src/api
-      dockerfile: Dockerfile
+      context: .
+      dockerfile: src/api/Dockerfile
     env_file:
       - .env
     environment:
@@ -246,8 +246,8 @@ services:
 
   search:
     build:
-      context: ./src/search
-      dockerfile: Dockerfile
+      context: .
+      dockerfile: src/search/Dockerfile
     env_file:
       - .env
     environment:
