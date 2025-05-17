@@ -1,3 +1,12 @@
+/* Tecnologico de Costa Rica | IC-4302 Bases de Datos II | Escuela de Computacion
+ * Mariann Marin Barquero    | Nicole Parra Valverde     | Stephanie Sandoval Camacho
+ * I Semestre - 2025
+ */
+/**
+ * This code is a Keycloak service for managing user roles and information in a Keycloak server.
+ * It provides methods to update user information, roles, and delete users.
+ * It uses the Axios library to make HTTP requests to the Keycloak REST API.
+ */
 const axios = require('axios');
 
 class KeycloakService {

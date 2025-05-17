@@ -1,3 +1,14 @@
+/* Tecnologico de Costa Rica | IC-4302 Bases de Datos II | Escuela de Computacion
+ * Mariann Marin Barquero    | Nicole Parra Valverde     | Stephanie Sandoval Camacho
+ * I Semestre - 2025
+ */
+
+/*
+This code is a data access object (DAO) factory that creates instances of different DAOs based on 
+the database type. It supports both PostgreSQL and MongoDB databases.
+It provides a single point of access to the DAOs, allowing the application to interact with the database
+through a consistent interface.
+*/ 
 const UserDAOPostgres = require('./DAOS/Postgres/UserDAOPostgres');
 const RestaurantDAOPostgres = require('./DAOS/Postgres/RestaurantDAOPostgres');
 const MenuDAOPostgres = require('./DAOS/Postgres/MenuDAOPostgres');

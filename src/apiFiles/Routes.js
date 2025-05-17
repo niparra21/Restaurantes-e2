@@ -1,3 +1,12 @@
+/* Tecnologico de Costa Rica | IC-4302 Bases de Datos II | Escuela de Computacion
+ * Mariann Marin Barquero    | Nicole Parra Valverde     | Stephanie Sandoval Camacho
+ * I Semestre - 2025
+ */
+
+/**
+ * In this file, we define the routes for our API using Express.js.
+ * The routes are organized into different sections for user authentication,
+ */
 const express = require('express');
 const {registerUser,cloneUserToMongo,loginUser,getUser,updateUser,deleteUser,registerMenu,getMenu,updateMenu,deleteMenu,getOrder,registerRestaurant,getRestaurants,registerReservation,getReservation,deleteReservation,registerOrder} = require('./Controller');
 const {authenticateJWT,isAdmin,canEdit} = require('./Middleware');

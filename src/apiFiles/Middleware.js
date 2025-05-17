@@ -1,3 +1,13 @@
+/* Tecnologico de Costa Rica | IC-4302 Bases de Datos II | Escuela de Computacion
+ * Mariann Marin Barquero    | Nicole Parra Valverde     | Stephanie Sandoval Camacho
+ * I Semestre - 2025
+ */
+
+/**
+ * This code is a Keycloak configuration module for an Express.js application.
+ * It provides middleware functions to authenticate JWT tokens, check user roles,
+ * and validate permissions for accessing certain routes.
+ */
 const jwt = require('jsonwebtoken');
 const jwksClient = require('jwks-rsa');
 const pool = require('./db');

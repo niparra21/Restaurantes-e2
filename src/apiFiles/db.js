@@ -1,3 +1,12 @@
+/* Tecnologico de Costa Rica | IC-4302 Bases de Datos II | Escuela de Computacion
+ * Mariann Marin Barquero    | Nicole Parra Valverde     | Stephanie Sandoval Camacho
+ * I Semestre - 2025
+ */
+
+/*
+This code is a PostgreSQL database connection module for a restaurant application.
+*/
+
 require('dotenv').config({ path: __dirname + '/../.env' });
 
 const { Pool } = require('pg');

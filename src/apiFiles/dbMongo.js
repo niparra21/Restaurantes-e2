@@ -1,7 +1,17 @@
+/* Tecnologico de Costa Rica | IC-4302 Bases de Datos II | Escuela de Computacion
+ * Mariann Marin Barquero    | Nicole Parra Valverde     | Stephanie Sandoval Camacho
+ * I Semestre - 2025
+ */
+
+/*
+This code is a Mongo database connection module for a restaurant application.
+It provides a function to connect to the MongoDB database and handle connection retries.
+*/
+
 require('dotenv').config({ path: __dirname + '/../.env' });
 const { MongoClient } = require('mongodb');
 
-const uri = 'mongodb://mongos:27017/Restaurante';
+const uri = process.env.MONGODB_URI;
 const client = new MongoClient(uri);
 
 const connectMongoDB = async (retries = 5, delay = 5000) => {

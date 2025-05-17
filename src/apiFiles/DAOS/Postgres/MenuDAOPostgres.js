@@ -1,3 +1,13 @@
+/* Tecnologico de Costa Rica | IC-4302 Bases de Datos II | Escuela de Computacion
+ * Mariann Marin Barquero    | Nicole Parra Valverde     | Stephanie Sandoval Camacho
+ * I Semestre - 2025
+ */
+
+/*
+This code is a MongoDB Data Access Object (DAO) for managing menus in a restaurant application.
+It provides methods to register, retrieve, update, and delete menus from the postgres database.
+*/ 
+
 const pool = require('../../db');
 
 class MenuDAOPostgres {

@@ -1,3 +1,13 @@
+/* Tecnologico de Costa Rica | IC-4302 Bases de Datos II | Escuela de Computacion
+ * Mariann Marin Barquero    | Nicole Parra Valverde     | Stephanie Sandoval Camacho
+ * I Semestre - 2025
+ */
+
+/*
+This code is a MongoDB Data Access Object (DAO) for managing orders in a restaurant application.
+It provides methods to register and retrieve orders from the MongoDB database.
+*/ 
+
 const { ObjectId } = require('mongodb');
 
 class OrderDAOMongo {

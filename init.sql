@@ -1,4 +1,7 @@
-
+/* Tecnologico de Costa Rica | IC-4302 Bases de Datos II | Escuela de Computacion
+ * Mariann Marin Barquero    | Nicole Parra Valverde     | Stephanie Sandoval Camacho
+ * I Semestre - 2025
+ */
 -- Create Users Table
 CREATE TABLE users (
     id SERIAL PRIMARY KEY,

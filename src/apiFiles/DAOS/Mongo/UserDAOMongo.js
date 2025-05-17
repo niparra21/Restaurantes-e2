@@ -1,3 +1,13 @@
+/* Tecnologico de Costa Rica | IC-4302 Bases de Datos II | Escuela de Computacion
+ * Mariann Marin Barquero    | Nicole Parra Valverde     | Stephanie Sandoval Camacho
+ * I Semestre - 2025
+ */
+
+/*
+This code is a MongoDB Data Access Object (DAO) for managing users in a restaurant application.
+it provides methods to create, retrieve, update, and delete users from the MongoDB database.
+*/ 
+
 const { ObjectId } = require('mongodb');
 
 class UserDAOMongo {

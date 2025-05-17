@@ -1,3 +1,12 @@
+/* Tecnologico de Costa Rica | IC-4302 Bases de Datos II | Escuela de Computacion
+ * Mariann Marin Barquero    | Nicole Parra Valverde     | Stephanie Sandoval Camacho
+ * I Semestre - 2025
+ */
+
+/**
+ * this code is the main entry point for a Node.js application that uses Express.js to create a 
+ * RESTful API. 
+ */
 const express = require("express");
 const cors = require("cors");
 const session = require("express-session");
