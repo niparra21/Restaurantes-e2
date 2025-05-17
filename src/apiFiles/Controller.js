@@ -25,7 +25,7 @@ const { getAdminToken } = require('./keycloak')
 app.use(express.json());
 
 const redisClient = new redis(process.env.REDIS_URL);
-const elasticClient = require('../../elastic-search/elasticsearchClient');
+const { elasticClient } = require('../../elastic-search/elasticsearchClient');
 
 /* ============================================================================================== */
 // AUTHENTICATION
@@ -712,7 +712,7 @@ const getProducts = async (req, res) => {
     const cachedProducts = await redisClient.get(cacheKey);                                         // get info from cache
     if (cachedProducts) {                                                                           // if info is in cache
       console.log('Got products from Redis');                                                       // log a message
-      res.json(JSON.parse(cachedProducts));                                                         // return cached products
+      return res.json(JSON.parse(cachedProducts));                                                  // return cached products
     }
 
     // 2. if there is no cache for this, look in db
@@ -786,7 +786,7 @@ const searchProducts = async (req, res) => {
       return res.status(400).json({ message: 'Debe proporcionar término de búsqueda (q) o categoría' });
     }
 
-    const { body } = await elasticClient.search({
+    const response = await elasticClient.search({
       index: 'products',
       body: {
         query: query,
@@ -799,7 +799,8 @@ const searchProducts = async (req, res) => {
       }
     });
 
-    const results = body.hits.hits.map(hit => ({
+    // Access hits directly from response
+    const results = response.hits.hits.map(hit => ({
       id: hit._source.db_id,
       ...hit._source,
       highlight: hit.highlight
@@ -808,7 +809,10 @@ const searchProducts = async (req, res) => {
     res.json(results);
   } catch (error) {
     console.error('Error buscando productos:', error);
-    res.status(500).json({ message: 'Error buscando productos', error: error.message || error });
+    res.status(500).json({ 
+      message: 'Error buscando productos', 
+      error: error.message || error 
+    });
   }
 };
 

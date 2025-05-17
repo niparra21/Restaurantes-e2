@@ -41,7 +41,7 @@ router.get('/products', authenticateJWT, isAdmin, getProducts);
 router.delete('/products/:id', authenticateJWT, isAdmin, deleteProduct);
 
 // ELASTIC
-router.get('/search/products', authenticateJWT, searchProducts);
+router.get('/products/search', authenticateJWT, searchProducts);
 
 router.get('/', (req, res) => {
     res.send('API funcionando correctamente en /api');
