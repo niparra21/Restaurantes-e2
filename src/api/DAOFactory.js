@@ -1,3 +1,8 @@
+/* Tecnologico de Costa Rica | IC-4302 Bases de Datos II | Escuela de Computacion
+ * Mariann Marin Barquero    | Nicole Parra Valverde     | Stephanie Sandoval Camacho
+ * I Semestre - 2025
+ */
+
 const UserDAOPostgres = require('./DAOS/Postgres/UserDAOPostgres');
 const RestaurantDAOPostgres = require('./DAOS/Postgres/RestaurantDAOPostgres');
 const MenuDAOPostgres = require('./DAOS/Postgres/MenuDAOPostgres');

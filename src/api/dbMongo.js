@@ -1,3 +1,8 @@
+/* Tecnologico de Costa Rica | IC-4302 Bases de Datos II | Escuela de Computacion
+ * Mariann Marin Barquero    | Nicole Parra Valverde     | Stephanie Sandoval Camacho
+ * I Semestre - 2025
+ */
+
 require('dotenv').config({ path: __dirname + '/../.env' });
 const { MongoClient } = require('mongodb');
 

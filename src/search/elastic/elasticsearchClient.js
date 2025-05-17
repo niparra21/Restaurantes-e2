@@ -1,3 +1,8 @@
+/* Tecnologico de Costa Rica | IC-4302 Bases de Datos II | Escuela de Computacion
+ * Mariann Marin Barquero    | Nicole Parra Valverde     | Stephanie Sandoval Camacho
+ * I Semestre - 2025
+ */
+
 const { Client } = require('@elastic/elasticsearch');
 
 const elasticClient = new Client({
@@ -8,9 +13,8 @@ const elasticClient = new Client({
 
 const initElasticSearch = async () => {
   try {
-    console.log('🔸 Intentando conectar a ElasticSearch...');
+    console.log('▫️  Intentando conectar a ElasticSearch...');
     
-    // Implement robust connection retry logic
     let connected = false;
     let attempts = 0;
     const maxAttempts = 10;
@@ -18,12 +22,12 @@ const initElasticSearch = async () => {
     while (!connected && attempts < maxAttempts) {
       attempts++;
       try {
-        console.log(`🔸 Intento de conexión a ElasticSearch ${attempts}/${maxAttempts}...`);
+        console.log(`▫️  Intento de conexión a ElasticSearch ${attempts}/${maxAttempts}...`);
         await elasticClient.ping();
         connected = true;
-        console.log('🔸 Conectado a ElasticSearch exitosamente!');
+        console.log('▫️  Conectado a ElasticSearch exitosamente!');
       } catch (err) {
-        console.log(`🔸 No se pudo conectar a ElasticSearch. Esperando 5 segundos...`);
+        console.log(`▫️  No se pudo conectar a ElasticSearch. Esperando 5 segundos...`);
         await new Promise(resolve => setTimeout(resolve, 5000)); // Wait 5 seconds between attempts
       }
     }
@@ -41,21 +45,20 @@ const initElasticSearch = async () => {
         index: 'products',
         body: {
           mappings: {
-            properties: { // Nivel properties requerido
+            properties: {
               name: { type: 'text' },
               description: { type: 'text' },
               category: { type: 'keyword' },
-              restaurant_id: { type: 'keyword' },
-              db_id: { type: 'keyword' }
+              restaurant_id: { type: 'keyword' }
             }
           }
         }
       });
-      console.log('🔸 Índice de productos creado en ElasticSearch');
+      console.log('▫️  Índice de productos creado en ElasticSearch');
     }
   } catch (error) {
-    console.error('🔸 Error inicializando ElasticSearch:', error.message);
-    throw error; // Propaga el error para manejo superior
+    console.error('▫️  Error inicializando ElasticSearch:', error.message);
+    throw error;
   }
 };
 

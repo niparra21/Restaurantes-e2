@@ -25,7 +25,7 @@ const { getAdminToken } = require('./keycloak')
 app.use(express.json());
 
 const redisClient = new redis(process.env.REDIS_URL);
-const { elasticClient } = require('../../elastic-search/elasticsearchClient');
+const { elasticClient } = require('./elastic/elasticsearchClient');
 
 /* ============================================================================================== */
 // AUTHENTICATION
@@ -754,69 +754,7 @@ const deleteProduct = async (req, res) => {
   }
 };
 
-/* --------------------------------------------------------------------- */
-// GET - SEARCH PRODUCTS
-
-const searchProducts = async (req, res) => {
-  const { q, category } = req.query;
-  
-  try {
-    let query = {};
-    
-    if (q && category) {
-      query = {
-        bool: {
-          must: [
-            { match: { name: q } },
-            { term: { category: category.toLowerCase() } }
-          ]
-        }
-      };
-    } else if (q) {
-      query = {
-        multi_match: {
-          query: q,
-          fields: ['name^3', 'description', 'category'],
-          fuzziness: 'AUTO'
-        }
-      };
-    } else if (category) {
-      query = { term: { category: category.toLowerCase() } };
-    } else {
-      return res.status(400).json({ message: 'Debe proporcionar término de búsqueda (q) o categoría' });
-    }
-
-    const response = await elasticClient.search({
-      index: 'products',
-      body: {
-        query: query,
-        highlight: {
-          fields: {
-            name: {},
-            description: {}
-          }
-        }
-      }
-    });
-
-    // Access hits directly from response
-    const results = response.hits.hits.map(hit => ({
-      id: hit._source.db_id,
-      ...hit._source,
-      highlight: hit.highlight
-    }));
-
-    res.json(results);
-  } catch (error) {
-    console.error('Error buscando productos:', error);
-    res.status(500).json({ 
-      message: 'Error buscando productos', 
-      error: error.message || error 
-    });
-  }
-};
-
 module.exports = { registerUser, cloneUserToMongo, loginUser, getUser, updateUser, deleteUser,
   registerMenu, getMenu, updateMenu, deleteMenu, getOrder, registerRestaurant, getRestaurants,
   registerReservation, getReservation, deleteReservation, registerOrder, registerProduct, getProducts,
-  deleteProduct, searchProducts };
+  deleteProduct };

@@ -206,16 +206,18 @@ services:
     networks:
       - backend-network
 
-  search:
-    image: nginxdemos/hello
-    ports:
-      - "4000:80"
-    networks:
-      - backend-network
+  # search:
+  #   image: nginxdemos/hello
+  #   ports:
+  #     - "4000:80"
+  #   networks:
+  #     - backend-network
 
   # Servicio API
   api:
-    build: .
+    build:
+      context: ./src/api
+      dockerfile: Dockerfile
     env_file:
       - .env
     environment:
@@ -242,6 +244,28 @@ services:
     networks:
       - backend-network
 
+  search:
+    build:
+      context: ./src/search
+      dockerfile: Dockerfile
+    env_file:
+      - .env
+    environment:
+      DB_USER: postgres
+      DB_PASSWORD: mitzy
+      DB_NAME: Restaurante
+      DB_HOST: db
+      DB_PORT: 5432
+      KEYCLOAK_URL: http://keycloak:8080
+      KEYCLOAK_REALM: reserva-restaurantes
+      KEYCLOAK_CLIENT_ID: api-restaurantes
+      JWT_SECRET: your_jwt_secret
+      REDIS_URL: redis://:${REDIS_PASSWORD}@redis:6379
+      ELASTICSEARCH_URL: http://elasticsearch:9200
+    ports:
+      - "5001:5001"
+    networks:
+      - backend-network
 
 # Configuración de volúmenes
 volumes:

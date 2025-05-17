@@ -1,3 +1,8 @@
+/* Tecnologico de Costa Rica | IC-4302 Bases de Datos II | Escuela de Computacion
+ * Mariann Marin Barquero    | Nicole Parra Valverde     | Stephanie Sandoval Camacho
+ * I Semestre - 2025
+ */
+
 const express = require('express');
 const { registerUser, cloneUserToMongo, loginUser, getUser, updateUser, deleteUser, registerMenu, getMenu,
   updateMenu, deleteMenu, getOrder, registerRestaurant, getRestaurants, registerReservation, getReservation, 
@@ -39,9 +44,6 @@ router.get('/orders/:id', authenticateJWT, getOrder);
 router.post('/products', authenticateJWT, isAdmin, registerProduct);
 router.get('/products', authenticateJWT, isAdmin, getProducts);
 router.delete('/products/:id', authenticateJWT, isAdmin, deleteProduct);
-
-// ELASTIC
-router.get('/products/search', authenticateJWT, searchProducts);
 
 router.get('/', (req, res) => {
     res.send('API funcionando correctamente en /api');

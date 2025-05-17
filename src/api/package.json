@@ -1,11 +1,11 @@
 {
-  "name": "reserva-restaurantes",
+  "name": "api",
   "version": "1.0.0",
   "private": true,
   "type": "commonjs",
-  "main": "server.js",
+  "main": "Server.js",
   "scripts": {
-    "start": "node server.js",
+    "start": "node Server.js",
     "test": "jest"
   },
   "dependencies": {
