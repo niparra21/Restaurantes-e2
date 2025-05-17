@@ -20,19 +20,32 @@ const reindexAllProducts = async () => {
     ]);
 
     console.log('🔸 Indexando productos en ElasticSearch...');
-    const { body: response } = await elasticClient.bulk({ refresh: true, body });
+    const response = await elasticClient.bulk({ refresh: true, body });
     
+    // Updated error handling for new client version
     if (response.errors) {
-      const errors = response.items.filter(item => item.index.error);
-      console.error('🔸 Errores durante la reindexación:', errors);
-      throw new Error(`Errores en ${errors.length} documentos`);
+      const erroredDocuments = [];
+      response.items.forEach((action, i) => {
+        if (action.index.error) {
+          erroredDocuments.push({
+            id: body[i*2].index._id,
+            error: action.index.error
+          });
+        }
+      });
+      console.error('🔸 Errores durante la reindexación:', erroredDocuments);
+      throw new Error(`Errores en ${erroredDocuments.length} documentos`);
     }
     
     const message = `🔸 Reindexación completada. ${products.length} productos procesados.`;
     console.log(message);
     return { success: true, message };
   } catch (error) {
-    console.error('🔸 Error en reindexación:', error);
+    console.error('🔸 Error en reindexación:', {
+      message: error.message,
+      stack: error.stack,
+      elasticError: error.meta?.body?.error
+    });
     throw error;
   }
 };
