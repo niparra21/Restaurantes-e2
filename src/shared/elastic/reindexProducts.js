@@ -43,7 +43,7 @@ const reindexAllProducts = async () => {
       { index: { _index: 'products', _id: (product.id || product._id).toString() } },               // index and id for each product
       {
         name: product.name,                                                                         // product name
-        description: product.description,                                                           // product description
+        description: product.description || 'Producto sin descripción',                             // product description
         category: product.category,                                                                 // product category
         restaurant_id: (product.restaurant_id && product.restaurant_id.toString())                  // product restaurant id as string
       }

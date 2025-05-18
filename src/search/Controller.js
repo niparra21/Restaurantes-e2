@@ -9,6 +9,7 @@ const app = express();
 app.use(express.json());
 
 const { elasticClient } = require('./shared/elastic/elasticsearchClient');
+const { reindexAllProducts } = require('./shared/elastic/reindexProducts');
 
 /* --------------------------------------------------------------------- */
 // GET - SEARCH PRODUCTS
@@ -74,4 +75,55 @@ const searchProducts = async (req, res) => {
   }
 };
 
-module.exports = { searchProducts };
+/* --------------------------------------------------------------------- */
+// GET - SEARCH BY CATEGORY ONLY
+
+const searchByCategory = async (req, res) => {
+  const { category } = req.params;
+  
+  try {
+    const response = await elasticClient.search({
+      index: 'products',
+      body: {
+        query: {
+          match: { 
+            category: category 
+          }
+        }
+      }
+    });
+
+    const results = response.hits.hits.map(hit => ({
+      id: hit._source.id,
+      ...hit._source
+    }));
+
+    res.json(results);
+  } catch (error) {
+    console.error('Error buscando por categoría:', error);
+    res.status(500).json({ 
+      message: 'Error buscando productos por categoría',
+      error: error.message 
+    });
+  }
+};
+
+/* --------------------------------------------------------------------- */
+// POST - REINDEX PRODUCTS
+
+const reindexProducts = async (req, res) => {
+  try {
+    const result = await reindexAllProducts();
+    res.json({ success: true, message: result.message });
+  } catch (error) {
+    console.error('Error en reindexación manual:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Error durante la reindexación',
+      error: error.message
+    });
+  }
+};
+
+
+module.exports = { searchProducts, searchByCategory, reindexProducts };
