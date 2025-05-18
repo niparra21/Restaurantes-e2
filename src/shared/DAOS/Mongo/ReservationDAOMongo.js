@@ -42,13 +42,13 @@ class ReservationDAOMongo {
   
   async deleteReservation(reservation_id) {
     try {
-      const result = await this.collection.deleteOne({ _id: new ObjectId(reservation_id) });
+      const result = await this.collection.findOneAndDelete({ _id: new ObjectId(reservation_id) });
       
       if (result.deletedCount === 0) {
         throw new Error("Reserva no encontrada");
       }
       
-      return { _id: reservation_id }; 
+      return result; 
     } catch (error) {
       console.error("Error al eliminar reserva en MongoDB:", error);
       throw error;
