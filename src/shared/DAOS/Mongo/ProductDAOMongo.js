@@ -1,13 +1,13 @@
+const dbPromise = require('../../db');
 const { ObjectId } = require('mongodb');
 
 class ProductDAOMongo {
-  constructor(db) {
-    this.collection = db.collection('products');
-  }
 
   async registerProduct(name, description, price, category, restaurant_id, is_active) {
     try {
-      const result = await this.collection.insertOne({
+      const db = await dbPromise;
+      const collection = db.collection('products');
+      const result = await collection.insertOne({
         name,
         description,
         price,
@@ -17,7 +17,7 @@ class ProductDAOMongo {
         created_at: new Date(),
         updated_at: new Date()
       });
-      return await this.collection.findOne({ _id: result.insertedId });
+      return await collection.findOne({ _id: result.insertedId });
     } catch (error) {
       console.error("Error al registrar producto en MongoDB:", error);
       throw error;
@@ -26,7 +26,9 @@ class ProductDAOMongo {
 
   async getProducts() {
     try {
-      const products = await this.collection.find(
+      const db = await dbPromise;
+      const collection = db.collection('products');
+      const products = await collection.find(
         {},
         { projection: { name: 1, description: 1, price: 1, category: 1, restaurant_id: 1, is_active: 1 } }
       ).toArray();
@@ -39,7 +41,9 @@ class ProductDAOMongo {
 
   async deleteProduct(id) {
     try {
-      const result = await this.collection.findOneAndDelete({ _id: new ObjectId(id) });
+      const db = await dbPromise;
+      const collection = db.collection('products');
+      const result = await collection.findOneAndDelete({ _id: new ObjectId(id) });
       if (!result) {
         throw new Error("Producto no encontrado");
       }

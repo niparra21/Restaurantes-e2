@@ -14,12 +14,13 @@ const { elasticClient } = require('./shared/elastic/elasticsearchClient');
 // GET - SEARCH PRODUCTS
 
 const searchProducts = async (req, res) => {
-  const { q, category } = req.query;
+  const { q, category } = req.query;                                                                // extract search term and category from query params
   
   try {
-    let query = {};
+    let query = {};                                                                                 // will hold the ElasticSearch query
     
-    if (q && category) {
+    // 1. Build the ElasticSearch query based on parameters
+    if (q && category) {                                                                            // if both search term and category are provided
       query = {
         bool: {
           must: [
@@ -34,7 +35,7 @@ const searchProducts = async (req, res) => {
           ]
         }
       };
-    } else if (q) {
+    } else if (q) {                                                                                 // if only search term is provided
       query = {
         multi_match: {
           query: q,
@@ -42,12 +43,13 @@ const searchProducts = async (req, res) => {
           fuzziness: 'AUTO'
         }
       };
-    } else if (category) {
+    } else if (category) {                                                                          // if only category is provided
       query = { match: { category: category } };
-    } else {
+    } else {                                                                                        // if neither is provided, return error
       return res.status(400).json({ message: 'Debe proporcionar término de búsqueda (q) o categoría' });
     }
 
+    // 2. Execute the search query in ElasticSearch
     const response = await elasticClient.search({
       index: 'products',
       body: {
@@ -55,15 +57,15 @@ const searchProducts = async (req, res) => {
       }
     });
 
-    // Access hits directly from response
+    // 3. Format and return the results
     const results = response.hits.hits.map(hit => ({
       id: hit._source.id,
       ...hit._source,
       highlight: hit.highlight
     }));
 
-    res.json(results);
-  } catch (error) {
+    res.json(results);                                                                              // return the search results
+  } catch (error) {                                                                                 // handle errors
     console.error('Error buscando productos:', error);
     res.status(500).json({ 
       message: 'Error buscando productos', 

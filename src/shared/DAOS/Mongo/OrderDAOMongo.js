@@ -1,13 +1,13 @@
+const dbPromise = require('../../db');
 const { ObjectId } = require('mongodb');
 
 class OrderDAOMongo {
-  constructor(db) {
-    this.collection = db.collection('orders');
-  }
-  
+
   async registerOrder(user_id, restaurant_id, menu_id, order_time, status) {
     try {
-      const result = await this.collection.insertOne({
+      const db = await dbPromise;
+      const collection = db.collection('orders');
+      const result = await collection.insertOne({
         user_id: new ObjectId(user_id),
         restaurant_id: new ObjectId(restaurant_id),
         menu_id: new ObjectId(menu_id),
@@ -17,7 +17,7 @@ class OrderDAOMongo {
         updated_at: new Date()
       });
       
-      return await this.collection.findOne({ _id: result.insertedId });
+      return await collection.findOne({ _id: result.insertedId });
     } catch (error) {
       console.error("Error al registrar pedido en MongoDB:", error);
       throw error;
@@ -26,7 +26,9 @@ class OrderDAOMongo {
   
   async getOrder(id) {
     try {
-      const result = await this.collection.findOne(
+      const db = await dbPromise;
+      const collection = db.collection('orders');
+      const result = await collection.findOne(
         { _id: new ObjectId(id) },
         {
           projection: {

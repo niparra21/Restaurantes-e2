@@ -45,7 +45,7 @@ const cloneUserToMongo = async (req, res) => {
 
   try {
 
-    const { userDAO: postgresUserDAO } = DAOFactory('postgres', null);
+    const { userDAO: postgresUserDAO } = DAOFactory('postgres');
     const existingUser = await postgresUserDAO.getUserByKeycloakId(keycloak_id);
 
     if (!existingUser) {
@@ -53,8 +53,7 @@ const cloneUserToMongo = async (req, res) => {
     }
 
     // Preparar instancia Mongo
-    const dbInstance = await require('./shared/dbMongo')();
-    const { userDAO: mongoUserDAO } = DAOFactory('mongo', dbInstance);
+    const { userDAO: mongoUserDAO } = DAOFactory('mongo');
 
     // Insertar en MongoDB usando el mismo keycloak_id
     const createdUser = await mongoUserDAO.createUser(
@@ -141,8 +140,7 @@ const registerUser = async (req, res) => {
     }
 
     const dbType = process.env.DB_TYPE;                                                             // 'postgres' o 'mongo'
-    const dbInstance = dbType === 'mongo' ? await require('./shared/dbMongo')() : null;
-    const { userDAO } = DAOFactory(dbType, dbInstance);
+    const { userDAO } = DAOFactory(dbType);
 
     // Verificar si el usuario ya existe
     const existingUser = await userDAO.findUserByEmailOrUsername(email, username);
@@ -242,8 +240,7 @@ const getUser = async (req, res) => {
 
     // 2. if there is no cache for this, look in db
     const dbType = process.env.DB_TYPE;                                                             // 'postgres' o 'mongo'
-    const dbInstance = dbType === 'mongo' ? await require('./shared/dbMongo')() : null;             // Instancia de MongoDB si es necesario
-    const { userDAO } = DAOFactory(dbType, dbInstance);                                             // Obtiene el DAO dinámico
+    const { userDAO } = DAOFactory(dbType);                                                         // Obtiene el DAO dinámico
 
     const user = await userDAO.findUserByKeycloakId(req.user.id);
 
@@ -272,8 +269,7 @@ const updateUser = async (req, res) => {
       return res.status(400).json({ message: 'ID inválido para PostgreSQL' });
     }
 
-    const dbInstance = dbType === 'mongo' ? await require('./shared/dbMongo')() : null;
-    const { userDAO } = DAOFactory(dbType, dbInstance);
+    const { userDAO } = DAOFactory(dbType);
 
     // 2. check if the user exists
     const existingUser = await userDAO.findUserById(userId);
@@ -311,8 +307,7 @@ const deleteUser = async (req, res) => {
   try {
     // 1. get current db and user information
     const dbType = process.env.DB_TYPE;
-    const dbInstance = dbType === 'mongo' ? await require('./shared/dbMongo')() : null;
-    const { userDAO } = DAOFactory(dbType, dbInstance);
+    const { userDAO } = DAOFactory(dbType);
 
     // 2. check if user exists
     const existingUser = await userDAO.findUserById(userId);
@@ -351,8 +346,7 @@ const registerRestaurant = async (req, res) => {
   try {
     // 1. get the db type to redirect to the correct DAO
     const dbType = process.env.DB_TYPE;                                                             // could be 'postgres' o 'mongo'
-    const dbInstance = dbType === 'mongo' ? await require('./shared/dbMongo')() : null;             // calls the dbMongo function if it's mongo
-    const { restaurantDAO } = DAOFactory(dbType, dbInstance);                                       // get the DAO dynamically
+    const { restaurantDAO } = DAOFactory(dbType);                                                   // get the DAO dynamically
 
     const newRestaurant = await restaurantDAO.registerRestaurant(name, address, phone, owner_id);   // get DAO method to register restaurant
     console.log('Deleted restaurants from Redis');                                                  // log a message 
@@ -383,8 +377,7 @@ const getRestaurants = async (req, res) => {
 
     // 2. if there is no cache for this, look in db
     const dbType = process.env.DB_TYPE;                                                             // type of db currently using (postres or mong)
-    const dbInstance = dbType === 'mongo' ? await require('./shared/dbMongo')() : null;             // initialize process
-    const { restaurantDAO } = DAOFactory(dbType, dbInstance);                                       // get the DAO
+    const { restaurantDAO } = DAOFactory(dbType);                                                   // get the DAO
 
     const restaurants = await restaurantDAO.getRestaurants();                                       // call the DAO's method to get restaurants
 
@@ -415,8 +408,7 @@ const registerMenu = async (req, res) => {
   const { restaurant_id, name, description } = req.body;
   try {
     const dbType = process.env.DB_TYPE; 
-    const dbInstance = dbType === 'mongo' ? await require('./shared/dbMongo')() : null; 
-    const { menuDAO } = DAOFactory(dbType, dbInstance); 
+    const { menuDAO } = DAOFactory(dbType); 
 
     const newMenu = await menuDAO.registerMenu(restaurant_id, name, description);
     await redisClient.del(`menu:${getEntityId(newMenu, dbType)}`);
@@ -445,8 +437,7 @@ const getMenu = async (req, res) => {
 
     // 2. if there is no cache for this, look in db
     const dbType = process.env.DB_TYPE;                                                             // type of db currently using (postgres or mongo)
-    const dbInstance = dbType === 'mongo' ? await require('./shared/dbMongo')() : null;             // initialize process
-    const { menuDAO } = DAOFactory(dbType, dbInstance);                                             // get the DAO
+    const { menuDAO } = DAOFactory(dbType);                                                         // get the DAO
     
     const menu = await menuDAO.getMenu(req.params.id);                                              // get the menu from db
 
@@ -468,8 +459,7 @@ const updateMenu = async (req, res) => {
   const { restaurant_id, name, description } = req.body;
   try {
     const dbType = process.env.DB_TYPE; 
-    const dbInstance = dbType === 'mongo' ? await require('./shared/dbMongo')() : null;  
-    const { menuDAO } = DAOFactory(dbType, dbInstance); 
+    const { menuDAO } = DAOFactory(dbType); 
   
     const updatedMenu = await menuDAO.updateMenu(req.params.id, restaurant_id, name, description);
     await redisClient.del(`menu:${getEntityId(updatedMenu, dbType)}`);
@@ -487,8 +477,7 @@ const updateMenu = async (req, res) => {
 const deleteMenu = async (req, res) => {
   try {
     const dbType = process.env.DB_TYPE; 
-    const dbInstance = dbType === 'mongo' ? await require('./shared/dbMongo')() : null; 
-    const { menuDAO } = DAOFactory(dbType, dbInstance); 
+    const { menuDAO } = DAOFactory(dbType); 
 
     const deletedMenu = await menuDAO.deleteMenu(req.params.id);
     await redisClient.del(`menu:${getEntityId(deletedMenu, dbType)}`);
@@ -516,8 +505,7 @@ const registerReservation = async (req, res) => {
 
   try {
     const dbType = process.env.DB_TYPE;                                                             // type of db currently using (postgres or mongo)
-    const dbInstance = dbType === 'mongo' ? await require('./shared/dbMongo')() : null;             // initialize process
-    const { reservationDAO } = DAOFactory(dbType, dbInstance);                                      // get DAO instance for reservations
+    const { reservationDAO } = DAOFactory(dbType);                                                  // get DAO instance for reservations
 
     const newReservation = await reservationDAO.registerReservation(user_id, restaurant_id, reservation_time); // register new reservation in db
     await redisClient.del(`reservation:${getEntityId(newReservation, dbType)}`);
@@ -545,8 +533,7 @@ const getReservation = async (req, res) => {
 
     // 2. if there is no cache for this, look in db
     const dbType = process.env.DB_TYPE;                                                             // type of db currently using (postgres or mongo)
-    const dbInstance = dbType === 'mongo' ? await require('./shared/dbMongo')() : null;             // initialize process
-    const { reservationDAO } = DAOFactory(dbType, dbInstance);                                      // get DAO instance for reservations
+    const { reservationDAO } = DAOFactory(dbType);                                                  // get DAO instance for reservations
     
     const reservation = await reservationDAO.getReservation(req.params.id);                         // retrieve reservation from db
     if (!reservation) return res.status(404).json({ message: 'Reserva no encontrada' });            // if reservation is not found, return 404
@@ -567,8 +554,7 @@ const getReservation = async (req, res) => {
 const deleteReservation = async (req, res) => {
   try {
     const dbType = process.env.DB_TYPE;                                                             // type of db currently using (postgres or mongo)
-    const dbInstance = dbType === 'mongo' ? await require('./shared/dbMongo')() : null;             // initialize process
-    const { reservationDAO } = DAOFactory(dbType, dbInstance);                                      // get DAO instance for reservations
+    const { reservationDAO } = DAOFactory(dbType);                                                  // get DAO instance for reservations
     
     const deletedReservation = await reservationDAO.deleteReservation(req.params.id);               // delete reservation from db
     await redisClient.del(`reservation:${getEntityId(deletedReservation, dbType)}`);                // delete reservation from cache
@@ -595,8 +581,7 @@ const registerOrder = async (req, res) => {
   const { user_id, restaurant_id, menu_id, order_time, status } = req.body;
   try {
     const dbType = process.env.DB_TYPE;                                                             // type of db currently using (postgres or mongo)
-    const dbInstance = dbType === 'mongo' ? await require('./shared/dbMongo')() : null;             // initialize process
-    const { orderDAO } = DAOFactory(dbType, dbInstance);                                            // get DAO instance for orders
+    const { orderDAO } = DAOFactory(dbType);                                                        // get DAO instance for orders
 
     const newOrder = await orderDAO.registerOrder(user_id, restaurant_id, menu_id, order_time, status); // register new order in db
     await redisClient.del(`order:${getEntityId(newOrder, dbType)}`);                                // delete order from cache
@@ -624,8 +609,7 @@ const getOrder = async (req, res) => {
 
     // 2. if there is no cache for this, look in db
     const dbType = process.env.DB_TYPE;                                                             // type of db currently using (postgres or mongo)
-    const dbInstance = dbType === 'mongo' ? await require('./shared/dbMongo')() : null;             // initialize process
-    const { orderDAO } = DAOFactory(dbType, dbInstance);                                            // get DAO instance for orders
+    const { orderDAO } = DAOFactory(dbType);                                                        // get DAO instance for orders
     
     const order = await orderDAO.getOrder(req.params.id);                                           // retrieve order from db
     if (!order) return res.status(404).json({ message: 'Orden no encontrada' });                    // if order is not found, return 404
@@ -696,8 +680,7 @@ const registerProduct = async (req, res) => {
   
   try {
     const dbType = process.env.DB_TYPE;
-    const dbInstance = dbType === 'mongo' ? await require('./shared/dbMongo')() : null;
-    const { productDAO } = DAOFactory(dbType, dbInstance);
+    const { productDAO } = DAOFactory(dbType);
 
     const newProduct = await productDAO.registerProduct( 
       name, description || 'Producto sin descripción', 
@@ -730,8 +713,7 @@ const getProducts = async (req, res) => {
 
     // 2. if there is no cache for this, look in db
     const dbType = process.env.DB_TYPE;                                                             // type of db currently using (postgres or mongo)
-    const dbInstance = dbType === 'mongo' ? await require('./shared/dbMongo')() : null;             // initialize process
-    const { productDAO } = DAOFactory(dbType, dbInstance);                                          // get product DAO
+    const { productDAO } = DAOFactory(dbType);                                                      // get product DAO
 
     const products = await productDAO.getProducts();                                                // call the DAO's method to get products
 
@@ -754,8 +736,7 @@ const deleteProduct = async (req, res) => {
   try {
     // 1. get current db and user information
     const dbType = process.env.DB_TYPE; 
-    const dbInstance = dbType === 'mongo' ? await require('./shared/dbMongo')() : null; 
-    const { productDAO } = DAOFactory(dbType, dbInstance); 
+    const { productDAO } = DAOFactory(dbType); 
 
     const deletedProduct = await productDAO.deleteProduct(productId);
 

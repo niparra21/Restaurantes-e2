@@ -3,11 +3,11 @@
  * I Semestre - 2025
  */
 
+const db = require('./db');
 const jwt = require('jsonwebtoken');
-const jwksClient = require('jwks-rsa');
-const pool = require('./db');
 const axios = require('axios');
-const dbMongo = require('./dbMongo');
+const jwksClient = require('jwks-rsa');
+
 const { ObjectId } = require('mongodb');
 const { getAdminToken } = require('./keycloak');
 
@@ -90,7 +90,7 @@ const canEdit = async (req, res, next) => {
     let keycloakIdToEdit;
 
     if (dbType === 'postgres') {
-      const result = await pool.query(
+      const result = await db.query(
         'SELECT keycloak_id FROM users WHERE id = $1',
         [userIdToEdit]
       );
@@ -99,8 +99,8 @@ const canEdit = async (req, res, next) => {
       }
       keycloakIdToEdit = result.rows[0].keycloak_id;
     } else if (dbType === 'mongo') {
-      const db = await dbMongo();
-      const user = await db.collection('users').findOne({ _id: new ObjectId(userIdToEdit) });
+      const mongoDb = await db;
+      const user = await mongoDb.collection('users').findOne({ _id: new ObjectId(userIdToEdit) });
       if (!user) {
         return res.status(404).json({ message: 'Usuario no encontrado.' });
       }

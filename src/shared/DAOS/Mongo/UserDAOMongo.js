@@ -1,13 +1,13 @@
+const dbPromise = require('../../db');
 const { ObjectId } = require('mongodb');
 
 class UserDAOMongo {
-  constructor(db) {
-    this.collection = db.collection('users');
-  }
   
   async findUserByEmailOrUsername(email, username) {
     try {
-      return await this.collection.findOne({
+      const db = await dbPromise;
+      const collection = db.collection('users');
+      return await collection.findOne({
         $or: [{ email }, { username }]
       });
     } catch (error) {
@@ -18,7 +18,9 @@ class UserDAOMongo {
   
   async createUser(username, hashedPassword, email, role, keycloakId) {
     try {
-      const result = await this.collection.insertOne({
+      const db = await dbPromise;
+      const collection = db.collection('users');
+      const result = await collection.insertOne({
         username,
         password: hashedPassword,
         email,
@@ -36,7 +38,9 @@ class UserDAOMongo {
   
   async findUserById(userId) {
     try {
-      return await this.collection.findOne({ _id: new ObjectId(userId) });
+      const db = await dbPromise;
+      const collection = db.collection('users');
+      return await collection.findOne({ _id: new ObjectId(userId) });
     } catch (error) {
       console.error("Error al buscar usuario por ID en MongoDB:", error);
       throw error;
@@ -45,7 +49,9 @@ class UserDAOMongo {
 
   async findUserByKeycloakId(keycloakId) {
     try {
-      return await this.collection.findOne({ keycloak_id: keycloakId });
+      const db = await dbPromise;
+      const collection = db.collection('users');
+      return await collection.findOne({ keycloak_id: keycloakId });
     } catch (error) {
       console.error("Error al buscar usuario por Keycloak ID en MongoDB:", error);
       throw error;
@@ -54,7 +60,9 @@ class UserDAOMongo {
   
   async updateUser(userId, email, role) {
     try {
-      const result = await this.collection.updateOne(
+      const db = await dbPromise;
+      const collection = db.collection('users');
+      const result = await collection.updateOne(
         { _id: new ObjectId(userId) },
         { $set: { email, role, updated_at: new Date() } }
       );
@@ -70,7 +78,9 @@ class UserDAOMongo {
   
   async deleteUser(userId) {
     try {
-      const result = await this.collection.findOneAndDelete({ _id: new ObjectId(userId) });
+      const db = await dbPromise;
+      const collection = db.collection('users');
+      const result = await collection.findOneAndDelete({ _id: new ObjectId(userId) });
       if (!result) {
         throw new Error("Usuario no encontrado");
       }

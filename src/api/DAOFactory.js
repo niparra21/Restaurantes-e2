@@ -17,7 +17,7 @@ const OrderDAOMongo = require('./shared/DAOS/Mongo/OrderDAOMongo');
 const ProductDAOMongo = require('./shared/DAOS/Mongo/ProductDAOMongo');
 const ReservationDAOMongo = require('./shared/DAOS/Mongo/ReservationDAOMongo');
 
-function DAOFactory(dbType, dbInstance) {
+function DAOFactory(dbType) {
   if (dbType === 'postgres') {
     return {
       userDAO: new UserDAOPostgres(),
@@ -31,12 +31,12 @@ function DAOFactory(dbType, dbInstance) {
   
   if (dbType === 'mongo') {
     return {
-      userDAO: new UserDAOMongo(dbInstance),
-      restaurantDAO: new RestaurantDAOMongo(dbInstance),
-      menuDAO: new MenuDAOMongo(dbInstance),
-      orderDAO: new OrderDAOMongo(dbInstance),
-      productDAO: new ProductDAOMongo(dbInstance),
-      reservationDAO: new ReservationDAOMongo(dbInstance),
+      userDAO: new UserDAOMongo(),
+      restaurantDAO: new RestaurantDAOMongo(),
+      menuDAO: new MenuDAOMongo(),
+      orderDAO: new OrderDAOMongo(),
+      productDAO: new ProductDAOMongo(),
+      reservationDAO: new ReservationDAOMongo(),
     };
   }
   

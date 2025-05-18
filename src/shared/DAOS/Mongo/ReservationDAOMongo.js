@@ -1,13 +1,13 @@
+const dbPromise = require('../../db');
 const { ObjectId } = require('mongodb');
 
 class ReservationDAOMongo {
-  constructor(db) {
-    this.collection = db.collection('reservations');
-  }
-  
+
   async registerReservation(user_id, restaurant_id, reservation_time) {
     try {
-      const result = await this.collection.insertOne({
+      const db = await dbPromise;
+      const collection = db.collection('reservations');
+      const result = await collection.insertOne({
         user_id: new ObjectId(user_id),
         restaurant_id: new ObjectId(restaurant_id),
         reservation_time: new Date(reservation_time),
@@ -15,7 +15,7 @@ class ReservationDAOMongo {
         updated_at: new Date()
       });
       
-      return await this.collection.findOne({ _id: result.insertedId });
+      return await collection.findOne({ _id: result.insertedId });
     } catch (error) {
       console.error("Error al registrar reserva en MongoDB:", error);
       throw error;
@@ -24,7 +24,9 @@ class ReservationDAOMongo {
 
   async getReservation(reservationId) {
   try {
-    return await this.collection.findOne(
+    const db = await dbPromise;
+      const collection = db.collection('reservations');
+    return await collection.findOne(
       { _id: new ObjectId(reservationId) },
       { projection: {
         _id: 1,
@@ -42,7 +44,9 @@ class ReservationDAOMongo {
   
   async deleteReservation(reservation_id) {
     try {
-      const result = await this.collection.findOneAndDelete({ _id: new ObjectId(reservation_id) });
+      const db = await dbPromise;
+      const collection = db.collection('reservations');
+      const result = await collection.findOneAndDelete({ _id: new ObjectId(reservation_id) });
       
       if (result.deletedCount === 0) {
         throw new Error("Reserva no encontrada");

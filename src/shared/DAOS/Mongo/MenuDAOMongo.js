@@ -1,13 +1,13 @@
+const dbPromise = require('../../db');
 const { ObjectId } = require('mongodb');
 
 class MenuDAOMongo {
-  constructor(db) {
-    this.collection = db.collection('menus');
-  }
-  
+
   async registerMenu(restaurantID, name, description) {
     try {
-      const result = await this.collection.insertOne({
+      const db = await dbPromise;
+      const collection = db.collection('menus');
+      const result = await collection.insertOne({
         restaurant_id: new ObjectId(restaurantID),
         name,
         description,
@@ -15,7 +15,7 @@ class MenuDAOMongo {
         updated_at: new Date()
       });
       
-      return await this.collection.findOne({ _id: result.insertedId });
+      return await collection.findOne({ _id: result.insertedId });
     } catch (error) {
       console.error("Error al registrar menú en MongoDB:", error);
       throw error;
@@ -24,7 +24,9 @@ class MenuDAOMongo {
   
   async getMenu(id) {
     try {
-      return await this.collection.findOne(
+      const db = await dbPromise;
+      const collection = db.collection('menus');
+      return await collection.findOne(
         { _id: new ObjectId(id) },
         {
           projection: {
@@ -43,7 +45,9 @@ class MenuDAOMongo {
   
   async updateMenu(id, restaurantID, name, description) {
     try {
-      const result = await this.collection.updateOne(
+      const db = await dbPromise;
+      const collection = db.collection('menus');
+      const result = await collection.updateOne(
         { _id: new ObjectId(id) },
         {
           $set: {
@@ -68,7 +72,9 @@ class MenuDAOMongo {
   
   async deleteMenu(id) {
     try {
-      const result = await this.collection.findOneAndDelete({ _id: new ObjectId(id) });
+      const db = await dbPromise;
+      const collection = db.collection('menus');
+      const result = await collection.findOneAndDelete({ _id: new ObjectId(id) });
       
       if (result.deletedCount === 0) {
         throw new Error("Menú no encontrado");

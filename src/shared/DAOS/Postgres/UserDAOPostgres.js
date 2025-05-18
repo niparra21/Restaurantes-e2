@@ -1,6 +1,7 @@
 const pool = require('../../db');
 
 class UserDAOPostgres {
+  
   async findUserByEmailOrUsername(email, username) {
     try {
       const result = await pool.query(
