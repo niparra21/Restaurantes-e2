@@ -5,12 +5,12 @@
 
 const express = require('express');
 const { searchProducts } = require('./Controller');
-const { authenticateJWT, isAdmin, canEdit } = require('./shared/Middleware');
+const { authenticateJWT, isAdmin } = require('./shared/Middleware');
 
 const router = express.Router();
 
 // ELASTIC
-router.get('/products', authenticateJWT, searchProducts);
+router.get('/products', authenticateJWT, isAdmin, searchProducts);
 
 router.get('/', (req, res) => {
     res.send('API funcionando correctamente en /api');
