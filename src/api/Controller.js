@@ -260,6 +260,10 @@ const updateUser = async (req, res) => {
   try {
     // 1. get current db information
     const dbType = process.env.DB_TYPE;
+    if (dbType === 'postgres' && isNaN(Number(userId))) {
+      return res.status(400).json({ message: 'ID inválido para PostgreSQL' });
+    }
+
     const dbInstance = dbType === 'mongo' ? await require('./shared/dbMongo')() : null;
     const { userDAO } = DAOFactory(dbType, dbInstance);
 

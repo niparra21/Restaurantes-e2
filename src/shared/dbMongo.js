@@ -6,7 +6,7 @@
 require('dotenv').config({ path: __dirname + '/../.env' });
 const { MongoClient } = require('mongodb');
 
-const uri = 'mongodb://mongos:27017/Restaurante';
+const uri = `mongodb://mongos:27017/${process.env.MONGO_INITDB_DATABASE}`;
 const client = new MongoClient(uri);
 
 const connectMongoDB = async (retries = 5, delay = 5000) => {

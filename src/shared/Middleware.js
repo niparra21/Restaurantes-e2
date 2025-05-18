@@ -6,8 +6,10 @@
 const jwt = require('jsonwebtoken');
 const jwksClient = require('jwks-rsa');
 const pool = require('./db');
-const { getAdminToken } = require('./keycloak');
 const axios = require('axios');
+const dbMongo = require('./dbMongo');
+const { ObjectId } = require('mongodb');
+const { getAdminToken } = require('./keycloak');
 
 const client = jwksClient({
   jwksUri: process.env.KEYCLOAK_JWKS_URI,
@@ -80,20 +82,33 @@ const isAdmin = async (req, res, next) => {
   
 };
 
-
 const canEdit = async (req, res, next) => {
-  const usernameFromToken = req.user.username; 
-  const userIdToEdit = req.params.id;       
+  const userIdToEdit = req.params.id;
+  const dbType = process.env.DB_TYPE;
 
   try {
-    const result = await pool.query(
-      'SELECT keycloak_id FROM users WHERE id = $1',
-      [userIdToEdit]
-    );
-    if (result.rows.length === 0) {
-      return res.status(404).json({ message: 'Usuario no encontrado.' });
+    let keycloakIdToEdit;
+
+    if (dbType === 'postgres') {
+      const result = await pool.query(
+        'SELECT keycloak_id FROM users WHERE id = $1',
+        [userIdToEdit]
+      );
+      if (result.rows.length === 0) {
+        return res.status(404).json({ message: 'Usuario no encontrado.' });
+      }
+      keycloakIdToEdit = result.rows[0].keycloak_id;
+    } else if (dbType === 'mongo') {
+      const db = await dbMongo();
+      const user = await db.collection('users').findOne({ _id: new ObjectId(userIdToEdit) });
+      if (!user) {
+        return res.status(404).json({ message: 'Usuario no encontrado.' });
+      }
+      keycloakIdToEdit = user.keycloak_id;
+    } else {
+      return res.status(500).json({ message: 'Tipo de base de datos no soportado.' });
     }
-    const keycloakIdToEdit = result.rows[0].keycloak_id;
+
     if (req.user.id === keycloakIdToEdit) {
       return next();
     }
