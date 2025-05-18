@@ -11,6 +11,7 @@
  *  - Redis caching layer for performance
  *  - Multi-database support (PostgreSQL/MongoDB)
  *  - DAO pattern implementation for data access abstraction
+ *  - Elastic indexation for search functionality
  */ 
 
 const express = require('express');
@@ -24,6 +25,7 @@ const { getAdminToken } = require('./shared/keycloak')
 
 app.use(express.json());
 
+const EXPIRATION_TIME = 600;
 const redisClient = new redis(process.env.REDIS_URL);
 const { elasticClient } = require('./shared/elastic/elasticsearchClient');
 
@@ -228,7 +230,7 @@ const registerUser = async (req, res) => {
 
 const getUser = async (req, res) => {
   const cacheKey = `user:${req.user.id}`;                                                           // unique key for this query
-  const cacheExpiration = 300;                                                                      // expiration time = 5 minutes in seconds
+  const cacheExpiration = EXPIRATION_TIME;                                                          // expiration time
 
   try {
     // 1. try to connect to redis
@@ -369,7 +371,7 @@ const registerRestaurant = async (req, res) => {
 
 const getRestaurants = async (req, res) => {
   const cacheKey = 'restaurants:all';                                                               // unique key for this query
-  const cacheExpiration = 300;                                                                      // expiration time = 5 minutes in seconds
+  const cacheExpiration = EXPIRATION_TIME;                                                          // expiration time
 
   try {
     // 1. try to connect to redis
@@ -431,7 +433,7 @@ const registerMenu = async (req, res) => {
 
 const getMenu = async (req, res) => {
   const cacheKey = `menu:${req.params.id}`;                                                         // unique cache key
-  const cacheExpiration = 300                                                                       // expiration time = 5 minutes in seconds
+  const cacheExpiration = 300                                                                       // expiration time
 
   try {
     // 1. try to connect to redis
@@ -531,7 +533,7 @@ const registerReservation = async (req, res) => {
 
 const getReservation = async (req, res) => {
   const cacheKey = `reservation:${req.params.id}`;                                                  // create cache key for reservation
-  const cacheExpiration = 300;                                                                      // cache expiration time in seconds (5 minutes)
+  const cacheExpiration = EXPIRATION_TIME;                                                          // cache expiration time in seconds (5 minutes)
 
   try {
     // 1. try to connect to redis
@@ -610,7 +612,7 @@ const registerOrder = async (req, res) => {
 
 const getOrder = async (req, res) => {
   const cacheKey = `order:${req.params.id}`;                                                        // create cache key for order
-  const cacheExpiration = 300;                                                                      // cache expiration time in seconds (5 minutes)
+  const cacheExpiration = EXPIRATION_TIME;                                                          // cache expiration time in seconds (5 minutes)
 
   try {
     // 1. try to connect to redis    
@@ -653,8 +655,7 @@ const indexProduct = async(product) => {
         name: product.name,
         description: product.description,
         category: product.category,
-        restaurant_id: product.restaurant_id,
-        db_id: product.id.toString(),
+        restaurant_id: product.restaurant_id
       }
     });
   } catch (error) {
@@ -717,7 +718,7 @@ const registerProduct = async (req, res) => {
 
 const getProducts = async (req, res) => {
   const cacheKey = 'products:all';                                                                  // unique key for this query
-  const cacheExpiration = 300;                                                                      // expiration time = 5 minutes in seconds
+  const cacheExpiration = EXPIRATION_TIME;                                                          // expiration time
 
   try {
     // 1. try to connect to redis
@@ -736,7 +737,7 @@ const getProducts = async (req, res) => {
 
     // 3. save info in Redis
     await redisClient.setex(cacheKey, cacheExpiration, JSON.stringify(products));                   // save info in Redis with expiration time
-    console.log('Stored restaurants in Redis');                                                     // log a message
+    console.log('Stored products in Redis');                                                        // log a message
     res.json(products);                                                                             // return products
   } catch (error) {                                                                                 // if there is an error
     console.error('Error obtiendo productos:', error);                                              // log the error
@@ -748,14 +749,17 @@ const getProducts = async (req, res) => {
 // DELETE - PRODUCT BY ID
 
 const deleteProduct = async (req, res) => {
+  const productId = req.params.id;
+
   try {
+    // 1. get current db and user information
     const dbType = process.env.DB_TYPE; 
     const dbInstance = dbType === 'mongo' ? await require('./shared/dbMongo')() : null; 
     const { productDAO } = DAOFactory(dbType, dbInstance); 
 
-    const deletedProduct = await productDAO.deleteProduct(req.params.id);
+    const deletedProduct = await productDAO.deleteProduct(productId);
 
-    await deleteFromElastic(deletedProduct.id);
+    await deleteFromElastic(productId);
     await redisClient.del('products:all');
 
     res.json({ message: 'Producto eliminado correctamente.', product: deletedProduct });

@@ -31,7 +31,7 @@ app.get("/", (req, res) => {
     res.send("API principal funcionando correctamente!");
 });
 
-const PORT = process.env.API_PORT || 5000; // Cambiado el puerto
+const PORT = process.env.API_PORT || 5000;
 
 const startServer = async () => {
   try {

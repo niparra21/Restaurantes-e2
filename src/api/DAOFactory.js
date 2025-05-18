@@ -14,6 +14,7 @@ const UserDAOMongo = require('./shared/DAOS/Mongo/UserDAOMongo');
 const RestaurantDAOMongo = require('./shared/DAOS/Mongo/RestaurantDAOMongo');
 const MenuDAOMongo = require('./shared/DAOS/Mongo/MenuDAOMongo');
 const OrderDAOMongo = require('./shared/DAOS/Mongo/OrderDAOMongo');
+const ProductDAOMongo = require('./shared/DAOS/Mongo/ProductDAOMongo');
 const ReservationDAOMongo = require('./shared/DAOS/Mongo/ReservationDAOMongo');
 
 function DAOFactory(dbType, dbInstance) {
@@ -34,6 +35,7 @@ function DAOFactory(dbType, dbInstance) {
       restaurantDAO: new RestaurantDAOMongo(dbInstance),
       menuDAO: new MenuDAOMongo(dbInstance),
       orderDAO: new OrderDAOMongo(dbInstance),
+      productDAO: new ProductDAOMongo(dbInstance),
       reservationDAO: new ReservationDAOMongo(dbInstance),
     };
   }

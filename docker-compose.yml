@@ -135,7 +135,7 @@ services:
   # ElasticSearch
   elasticsearch:
     image: docker.elastic.co/elasticsearch/elasticsearch:7.17.28
-    container_name: elasticsearch  # Explicit container name
+    container_name: elasticsearch
     environment:
       - discovery.type=single-node
       - xpack.security.enabled=false

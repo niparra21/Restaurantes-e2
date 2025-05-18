@@ -57,7 +57,7 @@ const searchProducts = async (req, res) => {
 
     // Access hits directly from response
     const results = response.hits.hits.map(hit => ({
-      id: hit._source.db_id,
+      id: hit._source.id,
       ...hit._source,
       highlight: hit.highlight
     }));
