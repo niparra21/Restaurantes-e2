@@ -1,106 +1,111 @@
-# React + Vite
+# 🍽️ Sistema de Reservación de Restaurantes
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+El sistema de reservación de restaurantes es una plataforma digital basada en una arquitectura de microservicios que permite gestionar de manera eficiente y segura las operaciones relacionadas con la administración de restaurantes, reservas, menús, órdenes y usuarios. Mediante el uso de tecnologías modernas, como bases de datos relacionales y NoSQL, motores de búsqueda, cacheo y balanceo de carga, el sistema facilita la creación, consulta y modificación de datos en tiempo real, ofreciendo una experiencia ágil y escalable tanto para los administradores como para los clientes. Además, incorpora mecanismos de autenticación, búsqueda avanzada y automatización de procesos para garantizar alta disponibilidad, rendimiento y facilidad de mantenimiento.
 
-Currently, two official plugins are available:
+***Autoras***
+* Mariann Marín Barquero
+* Nicole Parra Valverde
+* Stephanie Sandoval Camacho
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react/README.md) uses [Babel](https://babeljs.io/) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+## Requisitos
 
-Instrucciones de uso
+- Docker y Docker Compose
 
-Esta API permite gestionar usuarios, restaurantes, menús, reservaciones y pedidos, utilizando autenticación con Keycloak para garantizar la seguridad de las operaciones.
+## ⚙️ Configuraciones
 
-1. Configuración y Autenticación
-Para utilizar la API, es necesario configurar Keycloak en el entorno de ejecución. Se deben establecer las siguientes variables de entorno en un archivo .env:
+### Variables de Entorno
+Cree un archivo `.env` en la raíz del proyecto con las variables de entorno necesarias. En este caso, en la raíz se creó un archivo llamado `.envTemplate` con los nombres de las variables de entorno que se deben reemplazar.
 
-KEYCLOAK_REALM=tu_realm
-KEYCLOAK_URL=https://tu-servidor-keycloak.com
-KEYCLOAK_CLIENT_ID=tu_cliente
-KEYCLOAK_ADMIN_USERNAME=admin
-KEYCLOAK_ADMIN_PASSWORD=admin_password
+### 🗝️ Configuración del Realm en Keycloak
+El sistema utiliza Keycloak como gestor de autenticación y autorización. Para configurar el Realm, se deben seguir los siguientes pasos:
 
-La API usa keycloak-connect para gestionar sesiones y autenticación. Además, dispone de una función getAdminToken() que permite obtener un token de administrador cuando se necesite realizar operaciones con permisos elevados.
+1. En el docker-compose.yml, en el servicio `keycloak`, se encontrarán dos líneas comentadas. Descoméntelas y, en su lugar, comente las líneas anteriores a estas para que obtenga la siguiente configuración:
 
-2. Uso de la API
-2.1 Autenticación de Usuarios
-Antes de acceder a la mayoría de los recursos, un usuario debe registrarse e iniciar sesión. Para ello, se dispone de los siguientes endpoints:
+``` yml
+keycloak:
+  image: quay.io/keycloak/keycloak:24.0.1
+  #command: start-dev
+  command: start-dev --import-realm
+  environment:
+    KC_DB: postgres
+    KC_DB_URL: jdbc:postgresql://keycloak-db:5432/keycloak
+    KC_DB_USERNAME: keycloak
+    KC_DB_PASSWORD: keycloak
+    KEYCLOAK_ADMIN: admin
+    KEYCLOAK_ADMIN_PASSWORD: admin
+  ports:
+    - "8080:8080"
+  volumes:
+    #- keycloak-data:/opt/keycloak/data
+    - ./keycloak-realm:/opt/keycloak/data/import
+  depends_on:
+    keycloak-db:
+      condition: service_healthy
+  networks:
+    - backend-network
+```
+2. Ejecute el siguiente comando:
+``` bash
+docker-compose up keycloak
+```
+3. Deje que el sistema termine de inicializarse y luego acceda a la URL `http://localhost:8080` en su navegador. Inicie sesión con el usuario `admin` y la contraseña `admin`. Luego, haga clic en el dropdown con el Realm actual en la esquina superior izquierda y verifica que existan dos realms:
+  - `Keycloak master` (el que se crea automáticamente).
+  - `reserva-restaurantes` (el que se importa desde el archivo `keycloak-realm\reserva-restaurantes-realm.json`)
+4. Cuando esto esté listo, puede bajar el contenedor con el comando
+``` bash
+docker-compose down
+```
 
-Registro de usuario: Se realiza enviando una solicitud POST a /auth/register, proporcionando la información necesaria para crear una cuenta.
+## 🚀 Inicialización del Sistema
+Una vez que el sistema esté configurado, puede inicializarlo con el comando
+``` bash
+docker-compose up --build
+```
+Esto levantará todos los servicios: PostgreSQL, MongoDB, Redis, ElasticSearch, Keycloak junto con su base de datos y la API REST.
 
-Inicio de sesión: Para autenticarse, se debe enviar una solicitud POST a /auth/login, obteniendo un token de acceso que se usará en las siguientes peticiones.
+### 📌 Consideraciones Importantes
+- Antes de ejecutar el comando anterior, se debe haber devuelto la configuración de Keycloak a su estado original, es decir, que se debieron descomentar las líneas comentadas en el archivo `docker-compose.yml` y se tuvieron que comentar las líneas que se descomentaron anteriormente.
+- La variable de entorno `REINDEX_ON_START` se debe establecer en `false` ya que aun no existen productos en ninguna base de datos para reindexar. Una vez que existan productos, se puede establecer en `true` para reindexarlos.
+- La variable de entorno `DB_TYPE` se debe establecer en `postgres` o `mongo` según la base de datos que se desee utilizar.
 
-2.2 Gestión de Usuarios
-Una vez autenticado, un usuario puede consultar su información con una solicitud GET a /users/me. Además, si tiene los permisos adecuados, puede actualizar su perfil mediante una solicitud PUT a /users/:id o eliminar su cuenta con una solicitud DELETE a /users/:id.
-
-2.3 Gestión de Restaurantes
-Los administradores tienen la capacidad de registrar restaurantes enviando una solicitud POST a /restaurants. Para consultar los restaurantes disponibles, cualquier usuario autenticado puede hacer una solicitud GET a /restaurants.
-
-2.4 Gestión de Menús
-Los administradores pueden agregar menús a los restaurantes a través de una solicitud POST a /menus. Para consultar un menú específico, se debe hacer una solicitud GET a /menus/:id. Si es necesario modificar o eliminar un menú, los administradores pueden hacerlo mediante las solicitudes PUT y DELETE en el endpoint /menus/:id.
-
-2.5 Gestión de Reservaciones
-Los usuarios pueden realizar reservaciones en los restaurantes mediante una solicitud POST a /reservations. Si desean cancelar una reservación, pueden hacerlo enviando una solicitud DELETE a /reservations/:id.
-
-2.6 Gestión de Pedidos
-Para realizar un pedido, un usuario autenticado debe enviar una solicitud POST a /orders. Luego, si desea consultar los detalles de su pedido, puede hacerlo con una solicitud GET a /orders/:id.
-
-3. Seguridad y Control de Acceso
-Para garantizar que solo los usuarios autorizados accedan a ciertos recursos, la API emplea middlewares de autenticación y autorización:
-
-authenticateJWT: Verifica que el usuario esté autenticado con un token válido.
-
-isAdmin: Restringe el acceso a ciertos endpoints solo para administradores.
-
-canEdit: Permite a los usuarios modificar su propia información o a administradores editar información de otros usuarios.
-
-Gracias a estas medidas, la API ofrece un entorno seguro y controlado para la gestión de restaurantes.
-
-### 4.  Initialize MongoDB Sharded Cluster
-
-# a. Initialize Config Server Replica Set
-
+## 🍀 Inicialización del Clúster Shardeado de MongoDB
+Una vez que el sistema está arriba, si la base de datos seleccionada es MongoDB, se debe inicializar el clúster de MongoDB. Para esto, se deben seguir los siguientes pasos:
+1. Inicializar el Config Server Replica Set
 ``` bash
 docker exec -it mongo-config1 mongosh
 ```
 
 ``` js
 rs.initiate({
-    _id: "configReplSet",
-    configsvr: true,
-    members: [
-      { _id: 0, host: "mongo-config1:27017" },
-      { _id: 1, host: "mongo-config2:27017" },
-      { _id: 2, host: "mongo-config3:27017" }
-    ]
-  });
+  _id: "configReplSet",
+  configsvr: true,
+  members: [
+    { _id: 0, host: "mongo-config1:27017" },
+    { _id: 1, host: "mongo-config2:27017" },
+    { _id: 2, host: "mongo-config3:27017" }
+  ]
+});
 ```
 
-# b. Initialize Shard Replica Set
-
+2. Inicializar el Shard Replica Set
 ``` bash
 docker exec -it mongors1n1 mongosh
 ```
 
 ``` js
 rs.initiate({
-    _id: "mongors1",
-    members: [
-      { _id: 0, host: "mongors1n1:27017" },
-      { _id: 1, host: "mongors1n2:27017" },
-      { _id: 2, host: "mongors1n3:27017" }
-    ]
-  });
+  _id: "mongors1",
+  members: [
+    { _id: 0, host: "mongors1n1:27017" },
+    { _id: 1, host: "mongors1n2:27017" },
+    { _id: 2, host: "mongors1n3:27017" }
+  ]
+});
 ```
 
-use this command to check the status
+- Si se quiere revisar el estado de los replicaset, se puede hacer con el comando `rs.status()` en el shell de MongoDB.
 
-``` bash
-rs.status()
-``` 
-
-# b. Configure Sharding
-
+3. Configuración del Sharding
 ``` bash
 docker exec -it mongos mongosh
 ```
@@ -108,8 +113,68 @@ docker exec -it mongos mongosh
 ``` js
 sh.addShard("mongors1/mongors1n1:27017,mongors1n2:27017,mongors1n3:27017")
 sh.enableSharding("Restaurante")
-sh.shardCollection("Restaurante.products", { product_id: 1 })
-sh.shardCollection("Restaurante.reservations", { reservation_id: 1 })
-sh.status() // Verify shard, database, and collections
-
 ```
+
+- Si se quiere revisar el estado del sharding, se puede hacer con el comando `sh.status()` en el shell de MongoDB.
+
+## ⚡ Uso de la API
+La API se utiliza para realizar operaciones con los principales objetos que maneja el sistema: usuarios, restaurantes, menús, órdenes, reservaciones y productos. A continuación, se incluyen los métodos disponibles para cada objeto:
+
+### 🔸 Autenticación
+| Método | Ruta               | Función                                                                 |
+|--------|--------------------|-------------------------------------------------------------------------|
+| POST   | `/auth/register`   | Registra un nuevo usuario en Keycloak y en la base de datos en uso      |
+| POST   | `/auth/login`      | Inicia sesión para un usuario (devuelve token JWT de Keycloak)          |
+| POST   | `/clone`           | Clona un usuario de PostgreSQL a MongoDB                                |
+
+### 🔸 Usuarios
+| Método | Ruta           | Función                                                                 |
+|--------|----------------|-------------------------------------------------------------------------|
+| GET    | `/users/me`    | Devuelve información del usuario con sesión activa                      |
+| PUT    | `/users/:id`   | Actualiza información en Keycloak y base de datos                       |
+| DELETE | `/users/:id`   | Elimina cuenta en Keycloak y base de datos                              |
+
+### 🔸 Restaurantes
+| Método | Ruta              | Función                                                                 |
+|--------|-------------------|-------------------------------------------------------------------------|
+| POST   | `/restaurants`    | Agrega un nuevo restaurante                                             |
+| GET    | `/restaurants`    | Lista todos los restaurantes                                            |
+
+### 🔸 Menús
+| Método | Ruta            | Función                                                                 |
+|--------|-----------------|-------------------------------------------------------------------------|
+| POST   | `/menus`        | Agrega un nuevo menú                                                    |
+| GET    | `/menus/:id`    | Obtiene detalles de un menú específico                                  |
+| PUT    | `/menus/:id`    | Actualiza un menú existente                                             |
+| DELETE | `/menus/:id`    | Elimina un menú                                                         |
+
+### 🔸 Reservaciones
+| Método | Ruta                  | Función                                                                 |
+|--------|-----------------------|-------------------------------------------------------------------------|
+| POST   | `/reservations`       | Crea una nueva reservación                                              |
+| GET    | `/reservations/:id`   | Obtiene detalles de una reservación                                     |
+| DELETE | `/reservations/:id`   | Cancela una reservación                                                 |
+
+### 🔸 Órdenes
+| Método | Ruta             | Función                                                                 |
+|--------|------------------|-------------------------------------------------------------------------|
+| POST   | `/orders`        | Crea una nueva orden                                                    |
+| GET    | `/orders/:id`    | Obtiene detalles de una orden específica                                |
+
+### 🔸 Productos
+| Método | Ruta              | Función                                                                 |
+|--------|-------------------|-------------------------------------------------------------------------|
+| POST   | `/products`       | Agrega un nuevo producto                                                |
+| GET    | `/products`       | Lista todos los productos                                               |
+| DELETE | `/products/:id`   | Elimina un producto                                                     |
+
+## 🔍 Uso del Servidor de Búsquedas
+El sistema de búsquedas se utiliza para realizar consultas complejas de los productos almacenados en la base de datos. Para esto, se aprovecha las funcionalidades de ElasticSearch para realizar consultas de texto, por categoría o incluso una combinación de ambas. A continuación, se incluyen los métodos disponibles para el servidor de búsquedas:
+
+### 🔹 Productos (Búsqueda con ElasticSearch)
+
+| Método | Ruta                          | Función                                                                 |
+|--------|-------------------------------|-------------------------------------------------------------------------|
+| GET    | `/products`                   | Búsqueda en ElasticSearch por:<br>- Término (`?q=texto`)<br>- Categoría (`?category=valor`)<br>- Ambos criterios combinados |
+| GET    | `/products/category/:category`| Búsqueda filtrada exclusivamente por categoría                          |
+| POST   | `/reindex`                    | Ejecuta una reindexación manual completa de productos en ElasticSearch  |
