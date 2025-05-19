@@ -18,10 +18,12 @@ jobs:
         with:
           node-version: 18
 
-      - name: Install dependencies
+      - name: Install dependencies (API)
+        working-directory: ./src/api
         run: npm install
 
-      - name: Run tests
+      - name: Run tests (API)
+        working-directory: ./src/api
         run: npm test
 
   build-and-push:
