@@ -50,6 +50,8 @@ jest.mock('./Controller', () => ({
   cloneUserToMongo: jest.fn((req, res) => res.status(201).json({ message: 'Usuario clonado' })),
   getReservation: jest.fn((req, res) => res.status(200).json({ id: 1, time: '2025-05-14T19:00' })),
   registerProduct: jest.fn((req, res) => res.status(201).json({ message: 'Producto registrado' })),
+  getProducts: jest.fn((req, res) => res.status(200).json([{ id: 1, name: 'Producto' }])),
+  deleteProduct: jest.fn((req, res) => res.status(200).json({ message: 'Producto eliminado' }))
 }));
 
 const app = express();
