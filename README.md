@@ -59,7 +59,7 @@ docker-compose down
 ## 🚀 Inicialización del Sistema
 Una vez que el sistema esté configurado, puede inicializarlo con el comando
 ``` bash
-docker-compose up --build
+docker-compose up --build -d
 ```
 Esto levantará todos los servicios: PostgreSQL, MongoDB, Redis, ElasticSearch, Keycloak junto con su base de datos y la API REST.
 
@@ -178,3 +178,12 @@ El sistema de búsquedas se utiliza para realizar consultas complejas de los pro
 | GET    | `/products`                   | Búsqueda en ElasticSearch por:<br>- Término (`?q=texto`)<br>- Categoría (`?category=valor`)<br>- Ambos criterios combinados |
 | GET    | `/products/category/:category`| Búsqueda filtrada exclusivamente por categoría                          |
 | POST   | `/reindex`                    | Ejecuta una reindexación manual completa de productos en ElasticSearch  |
+
+## 📦 Ejemplos de Uso
+
+[Ejemplos de Uso](EXAMPLES.md)
+
+## 🎥 Video
+Se incluye un video que muestra la funcionalidad del sistema en acción.
+
+[Video Demostrativo]()

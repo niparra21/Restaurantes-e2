@@ -76,7 +76,7 @@ class MenuDAOMongo {
       const collection = db.collection('menus');
       const result = await collection.findOneAndDelete({ _id: new ObjectId(id) });
       
-      if (result.deletedCount === 0) {
+      if (!result) {
         throw new Error("Menú no encontrado");
       }
       

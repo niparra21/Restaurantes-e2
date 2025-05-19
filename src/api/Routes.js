@@ -7,7 +7,7 @@ const express = require('express');
 const { registerUser, cloneUserToMongo, loginUser, getUser, updateUser, deleteUser, registerMenu, getMenu,
   updateMenu, deleteMenu, getOrder, registerRestaurant, getRestaurants, registerReservation, getReservation, 
   deleteReservation, registerOrder, registerProduct, getProducts, deleteProduct, searchProducts } = require('./Controller');
-const { authenticateJWT, isAdmin, canEdit } = require('../shared/Middleware');
+const { authenticateJWT, isAdmin, canEdit } = require('./shared/Middleware');
 
 const router = express.Router();
 
