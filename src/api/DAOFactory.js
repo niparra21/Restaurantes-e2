@@ -44,3 +44,4 @@ function DAOFactory(dbType) {
 }
 
 module.exports = DAOFactory;
+
