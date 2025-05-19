@@ -162,4 +162,39 @@ describe('Pruebas de API', () => {
     const response = await request(app).get('/no-existe');
     expect(response.status).toBe(404);
   });
+
+  test('POST /products debería registrar un producto', async () => {
+    const response = await request(app).post('/products').send({
+      name: 'Pizza Margarita',
+      description: 'Pizza con tomate y queso',
+      price: 8500,
+      category: 'Pizza',
+      restaurant_id: 1,
+      is_active: true
+    });
+    expect(response.status).toBe(201);
+    expect(response.body.message || response.body.name).toBeDefined();
+  });
+
+  test('GET /products debería listar productos', async () => {
+    const response = await request(app).get('/products');
+    expect(response.status).toBe(200);
+    expect(Array.isArray(response.body)).toBe(true);
+  });
+
+  test('DELETE /products/:id debería eliminar un producto', async () => {
+    const createRes = await request(app).post('/products').send({
+      name: 'Producto Temporal',
+      description: 'Para pruebas',
+      price: 1000,
+      category: 'Test',
+      restaurant_id: 1,
+      is_active: true
+    });
+    const productId = createRes.body.id || createRes.body._id || 1; // fallback para mock
+
+    const response = await request(app).delete(`/products/${productId}`);
+    expect(response.status).toBe(200);
+    expect(response.body.message).toMatch(/eliminado/i);
+  });
 });
