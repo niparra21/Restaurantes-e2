@@ -1,0 +1,32 @@
+DATABASE_URL=postgres://user:password@localhost:5432/restaurante
+JWT_SECRET= your_jwt_secret
+
+DB_USER=postgres
+DB_PASSWORD=mitzy
+DB_NAME=Restaurante
+DB_HOST=localhost
+DB_PORT=5432
+DB_TYPE=postgres
+# Keycloak Configuration
+KEYCLOAK_URL=http://keycloak:8080
+KEYCLOAK_REALM=reserva-restaurantes
+KEYCLOAK_CLIENT_ID=api-restaurantes
+KEYCLOAK_ADMIN_USERNAME=admin
+KEYCLOAK_ADMIN_PASSWORD=admin
+KEYCLOAK_JWKS_URI=http://keycloak:8080/realms/reserva-restaurantes/protocol/openid-connect/certs
+KEYCLOAK_ISSUER=http://keycloak:8080/realms/reserva-restaurantes
+
+
+#MongoDB Configuration
+MONGO_INITDB_ROOT_USERNAME = root
+MONGO_INITDB_ROOT_PASSWORD = example
+MONGO_INITDB_DATABASE = restauranteMongo
+MONGO_HOST = mongo
+
+# Redis configuration
+REDIS_PASSWORD = J7x2jQ9Lp3vBw5zY8
+REDIS_URL = redis://:J7x2jQ9Lp3vBw5zY8@redis:6379
+
+# ElasticSearch configuration
+ELASTICSEARCH_URL = http://elasticsearch:9200
+REINDEX_ON_START = false
