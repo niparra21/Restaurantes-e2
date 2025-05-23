@@ -7,7 +7,7 @@ const request = require('supertest');
 const express = require('express');
 const router = require('./Routes');
 
-jest.mock('./shared/Middleware', () => ({
+jest.mock('../shared/Middleware', () => ({
   authenticateJWT: (req, res, next) => next(),
   isAdmin: (req, res, next) => next(),
   canEdit: (req, res, next) => next(),
