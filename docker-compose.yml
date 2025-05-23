@@ -296,7 +296,7 @@ services:
       REDIS_URL: redis://:${REDIS_PASSWORD}@redis:6379
       ELASTICSEARCH_URL: http://elasticsearch:9200
     ports:
-      - "5001:5001"
+      - "5003:5003"
     networks:
       - backend-network
 

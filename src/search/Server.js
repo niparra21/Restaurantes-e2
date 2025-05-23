@@ -16,7 +16,7 @@ app.use(express.json());
 
 app.use("/search", routes);
 
-const PORT = process.env.SEARCH_PORT || 5001;
+const PORT = process.env.SEARCH_PORT || 5003;
 
 const startServer = async () => {
   try {
