@@ -204,7 +204,7 @@ services:
     depends_on:
       - api1
       - api2
-      - search   
+      - elasticsearch   
     networks:
       - backend-network
 
