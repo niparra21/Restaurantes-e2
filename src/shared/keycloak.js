@@ -3,10 +3,6 @@
  * I Semestre - 2025
  */
 
-/**
- This code is a Keycloak configuration module for an Express.js application.
- It sets up Keycloak for authentication and authorization, allowing the application to secure its routes and manage user sessions.
- */
 const session = require('express-session');
 const Keycloak = require('keycloak-connect');
 const axios = require('axios');

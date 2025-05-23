@@ -3,19 +3,16 @@
  * I Semestre - 2025
  */
 
-/**
- * This code is a Keycloak configuration module for an Express.js application.
- * It provides middleware functions to authenticate JWT tokens, check user roles,
- * and validate permissions for accessing certain routes.
- */
+const db = require('./db');
 const jwt = require('jsonwebtoken');
-const jwksClient = require('jwks-rsa');
-const pool = require('./db');
-const { getAdminToken } = require('./keycloak');
 const axios = require('axios');
+const jwksClient = require('jwks-rsa');
+
+const { ObjectId } = require('mongodb');
+const { getAdminToken } = require('./keycloak');
 
 const client = jwksClient({
-  jwksUri: process.env.KEYCLOAK_JWKS_URI || 'http://localhost:8080/realms/restaurant/protocol/openid-connect/certs',
+  jwksUri: process.env.KEYCLOAK_JWKS_URI,
 });
 
 function getKey(header, callback) {
@@ -85,20 +82,33 @@ const isAdmin = async (req, res, next) => {
   
 };
 
-
 const canEdit = async (req, res, next) => {
-  const usernameFromToken = req.user.username; 
-  const userIdToEdit = req.params.id;       
+  const userIdToEdit = req.params.id;
+  const dbType = process.env.DB_TYPE;
 
   try {
-    const result = await pool.query(
-      'SELECT keycloak_id FROM users WHERE id = $1',
-      [userIdToEdit]
-    );
-    if (result.rows.length === 0) {
-      return res.status(404).json({ message: 'Usuario no encontrado.' });
+    let keycloakIdToEdit;
+
+    if (dbType === 'postgres') {
+      const result = await db.query(
+        'SELECT keycloak_id FROM users WHERE id = $1',
+        [userIdToEdit]
+      );
+      if (result.rows.length === 0) {
+        return res.status(404).json({ message: 'Usuario no encontrado.' });
+      }
+      keycloakIdToEdit = result.rows[0].keycloak_id;
+    } else if (dbType === 'mongo') {
+      const mongoDb = await db;
+      const user = await mongoDb.collection('users').findOne({ _id: new ObjectId(userIdToEdit) });
+      if (!user) {
+        return res.status(404).json({ message: 'Usuario no encontrado.' });
+      }
+      keycloakIdToEdit = user.keycloak_id;
+    } else {
+      return res.status(500).json({ message: 'Tipo de base de datos no soportado.' });
     }
-    const keycloakIdToEdit = result.rows[0].keycloak_id;
+
     if (req.user.id === keycloakIdToEdit) {
       return next();
     }

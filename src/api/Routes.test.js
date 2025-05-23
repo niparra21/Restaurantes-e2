@@ -3,15 +3,11 @@
  * I Semestre - 2025
  */
 
-/**
- * In this file, we test the API routes and their corresponding controllers.
- * We use Jest and Supertest to simulate HTTP requests and validate the responses.
- */
 const request = require('supertest');
 const express = require('express');
 const router = require('./Routes');
 
-jest.mock('./Middleware', () => ({
+jest.mock('../shared/Middleware', () => ({
   authenticateJWT: (req, res, next) => next(),
   isAdmin: (req, res, next) => next(),
   canEdit: (req, res, next) => next(),
@@ -53,6 +49,9 @@ jest.mock('./Controller', () => ({
   registerOrder: jest.fn((req, res) => res.status(201).json({ message: 'Orden creada' })),
   cloneUserToMongo: jest.fn((req, res) => res.status(201).json({ message: 'Usuario clonado' })),
   getReservation: jest.fn((req, res) => res.status(200).json({ id: 1, time: '2025-05-14T19:00' })),
+  registerProduct: jest.fn((req, res) => res.status(201).json({ message: 'Producto registrado' })),
+  getProducts: jest.fn((req, res) => res.status(200).json([{ id: 1, name: 'Producto' }])),
+  deleteProduct: jest.fn((req, res) => res.status(200).json({ message: 'Producto eliminado' }))
 }));
 
 const app = express();
@@ -162,5 +161,40 @@ describe('Pruebas de API', () => {
   test('GET /no-existe debería devolver 404', async () => {
     const response = await request(app).get('/no-existe');
     expect(response.status).toBe(404);
+  });
+
+  test('POST /products debería registrar un producto', async () => {
+    const response = await request(app).post('/products').send({
+      name: 'Pizza Margarita',
+      description: 'Pizza con tomate y queso',
+      price: 8500,
+      category: 'Pizza',
+      restaurant_id: 1,
+      is_active: true
+    });
+    expect(response.status).toBe(201);
+    expect(response.body.message || response.body.name).toBeDefined();
+  });
+
+  test('GET /products debería listar productos', async () => {
+    const response = await request(app).get('/products');
+    expect(response.status).toBe(200);
+    expect(Array.isArray(response.body)).toBe(true);
+  });
+
+  test('DELETE /products/:id debería eliminar un producto', async () => {
+    const createRes = await request(app).post('/products').send({
+      name: 'Producto Temporal',
+      description: 'Para pruebas',
+      price: 1000,
+      category: 'Test',
+      restaurant_id: 1,
+      is_active: true
+    });
+    const productId = createRes.body.id || createRes.body._id || 1; // fallback para mock
+
+    const response = await request(app).delete(`/products/${productId}`);
+    expect(response.status).toBe(200);
+    expect(response.body.message).toMatch(/eliminado/i);
   });
 });

@@ -10,6 +10,7 @@ It provides methods to create, retrieve, update, and delete users from the postg
 const pool = require('../../db');
 
 class UserDAOPostgres {
+  
   async findUserByEmailOrUsername(email, username) {
     try {
       const result = await pool.query(

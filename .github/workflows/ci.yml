@@ -18,10 +18,12 @@ jobs:
         with:
           node-version: 18
 
-      - name: Install dependencies
+      - name: Install dependencies (API)
+        working-directory: ./src/api
         run: npm install
 
-      - name: Run tests
+      - name: Run tests (API)
+        working-directory: ./src/api
         run: npm test
 
   build-and-push:
@@ -37,8 +39,14 @@ jobs:
           username: ${{ secrets.DOCKER_USERNAME }}
           password: ${{ secrets.DOCKER_PASSWORD }}
 
-      - name: Build Docker image
-        run: docker build -t ${{ secrets.DOCKER_USERNAME }}/restaurantes-e2:latest .
+      - name: Build API image
+        run: docker build -t ${{ secrets.DOCKER_USERNAME }}/restaurantes-e2-api:latest -f src/api/Dockerfile .
 
-      - name: Push to DockerHub
-        run: docker push ${{ secrets.DOCKER_USERNAME }}/restaurantes-e2:latest
+      - name: Build Search image
+        run: docker build -t ${{ secrets.DOCKER_USERNAME }}/restaurantes-e2-search:latest -f src/search/Dockerfile .
+
+      - name: Push API image
+        run: docker push ${{ secrets.DOCKER_USERNAME }}/restaurantes-e2-api:latest
+
+      - name: Push Search image
+        run: docker push ${{ secrets.DOCKER_USERNAME }}/restaurantes-e2-search:latest

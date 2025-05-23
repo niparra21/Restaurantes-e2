@@ -32,7 +32,7 @@ class RestaurantDAOPostgres {
       const result = await pool.query('SELECT id, name, address, phone, owner_id FROM restaurants');
       return result.rows;
     } catch (error) {
-      console.error("Error al obtener restaurantes en PostgreSQL:", error);
+      console.error("Error al obtener restaurantes:", error);
       throw error;
     }
   }

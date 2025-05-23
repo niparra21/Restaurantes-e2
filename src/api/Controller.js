@@ -11,6 +11,7 @@
  *  - Redis caching layer for performance
  *  - Multi-database support (PostgreSQL/MongoDB)
  *  - DAO pattern implementation for data access abstraction
+ *  - Elastic indexation for search functionality
  */ 
 
 const express = require('express');
@@ -20,11 +21,17 @@ const axios = require('axios');
 const DAOFactory = require('./DAOFactory');
 const redis = require('ioredis');
 const KeycloakService = require('./KeycloakService');
-const { getAdminToken } = require('./keycloak')
+const { getAdminToken } = require('./shared/keycloak')
 
 app.use(express.json());
 
-const redisClient = new redis(process.env.REDIS_URL || 'redis://localhost:6379');
+const EXPIRATION_TIME = 600;
+const redisClient = new redis(process.env.REDIS_URL);
+const { elasticClient } = require('./shared/elastic/elasticsearchClient');
+
+function getEntityId(entity, dbType) {
+  return dbType === 'mongo' ? entity._id : entity.id;
+}
 
 /* ============================================================================================== */
 // AUTHENTICATION
@@ -38,7 +45,7 @@ const cloneUserToMongo = async (req, res) => {
 
   try {
 
-    const { userDAO: postgresUserDAO } = DAOFactory('postgres', null);
+    const { userDAO: postgresUserDAO } = DAOFactory('postgres');
     const existingUser = await postgresUserDAO.getUserByKeycloakId(keycloak_id);
 
     if (!existingUser) {
@@ -46,8 +53,7 @@ const cloneUserToMongo = async (req, res) => {
     }
 
     // Preparar instancia Mongo
-    const dbInstance = await require('./dbMongo')();
-    const { userDAO: mongoUserDAO } = DAOFactory('mongo', dbInstance);
+    const { userDAO: mongoUserDAO } = DAOFactory('mongo');
 
     // Insertar en MongoDB usando el mismo keycloak_id
     const createdUser = await mongoUserDAO.createUser(
@@ -134,8 +140,7 @@ const registerUser = async (req, res) => {
     }
 
     const dbType = process.env.DB_TYPE;                                                             // 'postgres' o 'mongo'
-    const dbInstance = dbType === 'mongo' ? await require('./dbMongo')() : null;
-    const { userDAO } = DAOFactory(dbType, dbInstance);
+    const { userDAO } = DAOFactory(dbType);
 
     // Verificar si el usuario ya existe
     const existingUser = await userDAO.findUserByEmailOrUsername(email, username);
@@ -203,6 +208,8 @@ const registerUser = async (req, res) => {
       keycloak_id: newUser.keycloak_id
     });
 
+    await redisClient.del(`user:${newUser.keycloak_id}`);
+
   } catch (error) {
     console.error('Error detallado al registrar usuario:', {
       keycloakError: error.response?.data,
@@ -221,7 +228,7 @@ const registerUser = async (req, res) => {
 
 const getUser = async (req, res) => {
   const cacheKey = `user:${req.user.id}`;                                                           // unique key for this query
-  const cacheExpiration = 300;                                                                      // expiration time = 5 minutes in seconds
+  const cacheExpiration = EXPIRATION_TIME;                                                          // expiration time
 
   try {
     // 1. try to connect to redis
@@ -233,8 +240,7 @@ const getUser = async (req, res) => {
 
     // 2. if there is no cache for this, look in db
     const dbType = process.env.DB_TYPE;                                                             // 'postgres' o 'mongo'
-    const dbInstance = dbType === 'mongo' ? await require('./dbMongo')() : null;                    // Instancia de MongoDB si es necesario
-    const { userDAO } = DAOFactory(dbType, dbInstance);                                             // Obtiene el DAO dinámico
+    const { userDAO } = DAOFactory(dbType);                                                         // Obtiene el DAO dinámico
 
     const user = await userDAO.findUserByKeycloakId(req.user.id);
 
@@ -259,8 +265,11 @@ const updateUser = async (req, res) => {
   try {
     // 1. get current db information
     const dbType = process.env.DB_TYPE;
-    const dbInstance = dbType === 'mongo' ? await require('./dbMongo')() : null;
-    const { userDAO } = DAOFactory(dbType, dbInstance);
+    if (dbType === 'postgres' && isNaN(Number(userId))) {
+      return res.status(400).json({ message: 'ID inválido para PostgreSQL' });
+    }
+
+    const { userDAO } = DAOFactory(dbType);
 
     // 2. check if the user exists
     const existingUser = await userDAO.findUserById(userId);
@@ -298,8 +307,7 @@ const deleteUser = async (req, res) => {
   try {
     // 1. get current db and user information
     const dbType = process.env.DB_TYPE;
-    const dbInstance = dbType === 'mongo' ? await require('./dbMongo')() : null;
-    const { userDAO } = DAOFactory(dbType, dbInstance);
+    const { userDAO } = DAOFactory(dbType);
 
     // 2. check if user exists
     const existingUser = await userDAO.findUserById(userId);
@@ -338,8 +346,7 @@ const registerRestaurant = async (req, res) => {
   try {
     // 1. get the db type to redirect to the correct DAO
     const dbType = process.env.DB_TYPE;                                                             // could be 'postgres' o 'mongo'
-    const dbInstance = dbType === 'mongo' ? await require('./dbMongo')() : null;                    // calls the dbMongo function if it's mongo
-    const { restaurantDAO } = DAOFactory(dbType, dbInstance);                                       // get the DAO dynamically
+    const { restaurantDAO } = DAOFactory(dbType);                                                   // get the DAO dynamically
 
     const newRestaurant = await restaurantDAO.registerRestaurant(name, address, phone, owner_id);   // get DAO method to register restaurant
     console.log('Deleted restaurants from Redis');                                                  // log a message 
@@ -358,7 +365,7 @@ const registerRestaurant = async (req, res) => {
 
 const getRestaurants = async (req, res) => {
   const cacheKey = 'restaurants:all';                                                               // unique key for this query
-  const cacheExpiration = 300;                                                                      // expiration time = 5 minutes in seconds
+  const cacheExpiration = EXPIRATION_TIME;                                                          // expiration time
 
   try {
     // 1. try to connect to redis
@@ -370,8 +377,7 @@ const getRestaurants = async (req, res) => {
 
     // 2. if there is no cache for this, look in db
     const dbType = process.env.DB_TYPE;                                                             // type of db currently using (postres or mong)
-    const dbInstance = dbType === 'mongo' ? await require('./dbMongo')() : null;                    // initialize process
-    const { restaurantDAO } = DAOFactory(dbType, dbInstance);                                       // get the DAO
+    const { restaurantDAO } = DAOFactory(dbType);                                                   // get the DAO
 
     const restaurants = await restaurantDAO.getRestaurants();                                       // call the DAO's method to get restaurants
 
@@ -402,11 +408,10 @@ const registerMenu = async (req, res) => {
   const { restaurant_id, name, description } = req.body;
   try {
     const dbType = process.env.DB_TYPE; 
-    const dbInstance = dbType === 'mongo' ? await require('./dbMongo')() : null; 
-    const { menuDAO } = DAOFactory(dbType, dbInstance); 
+    const { menuDAO } = DAOFactory(dbType); 
 
     const newMenu = await menuDAO.registerMenu(restaurant_id, name, description);
-    await redisClient.del(`menu:${newMenu.id}`);
+    await redisClient.del(`menu:${getEntityId(newMenu, dbType)}`);
 
     res.status(201).json(newMenu);
   } catch (error) {
@@ -419,8 +424,8 @@ const registerMenu = async (req, res) => {
 // GET - MENU BY ID
 
 const getMenu = async (req, res) => {
-  const cacheKey = `menu:${req.params.id}`;       // unique cache key
-  const cacheExpiration = 300;                    // expiration time = 5 minutes in seconds
+  const cacheKey = `menu:${req.params.id}`;                                                         // unique cache key
+  const cacheExpiration = 300                                                                       // expiration time
 
   try {
     // 1. try to connect to redis
@@ -434,9 +439,8 @@ const getMenu = async (req, res) => {
     }
 
     // 2. if there is no cache for this, look in db
-    const dbType = process.env.DB_TYPE;
-    const dbInstance = dbType === 'mongo' ? await require('./dbMongo')() : null;
-    const { menuDAO } = DAOFactory(dbType, dbInstance);
+    const dbType = process.env.DB_TYPE;                                                             // type of db currently using (postgres or mongo)
+    const { menuDAO } = DAOFactory(dbType);                                                         // get the DAO
     
     const menu = await menuDAO.getMenu(req.params.id);
 
@@ -467,11 +471,10 @@ const updateMenu = async (req, res) => {
   const { restaurant_id, name, description } = req.body;
   try {
     const dbType = process.env.DB_TYPE; 
-    const dbInstance = dbType === 'mongo' ? await require('./dbMongo')() : null;  
-    const { menuDAO } = DAOFactory(dbType, dbInstance); 
+    const { menuDAO } = DAOFactory(dbType); 
   
     const updatedMenu = await menuDAO.updateMenu(req.params.id, restaurant_id, name, description);
-    await redisClient.del(`menu:${updatedMenu.id}`);
+    await redisClient.del(`menu:${getEntityId(updatedMenu, dbType)}`);
 
     res.json(updatedMenu);
   } catch (error) {
@@ -486,11 +489,10 @@ const updateMenu = async (req, res) => {
 const deleteMenu = async (req, res) => {
   try {
     const dbType = process.env.DB_TYPE; 
-    const dbInstance = dbType === 'mongo' ? await require('./dbMongo')() : null; 
-    const { menuDAO } = DAOFactory(dbType, dbInstance); 
+    const { menuDAO } = DAOFactory(dbType); 
 
     const deletedMenu = await menuDAO.deleteMenu(req.params.id);
-    await redisClient.del(`menu:${deletedMenu.id}`);
+    await redisClient.del(`menu:${getEntityId(deletedMenu, dbType)}`);
 
     res.json({ message: 'Menú eliminado correctamente.', menu: deletedMenu });
   } catch (error) {
@@ -515,11 +517,10 @@ const registerReservation = async (req, res) => {
 
   try {
     const dbType = process.env.DB_TYPE;                                                             // type of db currently using (postgres or mongo)
-    const dbInstance = dbType === 'mongo' ? await require('./dbMongo')() : null;                    // initialize process
-    const { reservationDAO } = DAOFactory(dbType, dbInstance);                                      // get DAO instance for reservations
+    const { reservationDAO } = DAOFactory(dbType);                                                  // get DAO instance for reservations
 
     const newReservation = await reservationDAO.registerReservation(user_id, restaurant_id, reservation_time); // register new reservation in db
-    await redisClient.del(`menu:${newReservation.id}`);
+    await redisClient.del(`reservation:${getEntityId(newReservation, dbType)}`);
     res.status(201).json(newReservation);                                                           // return new reservation
   } catch (error) {
     console.error('Error registrando reserva:', error);                                             // log the error
@@ -532,7 +533,7 @@ const registerReservation = async (req, res) => {
 
 const getReservation = async (req, res) => {
   const cacheKey = `reservation:${req.params.id}`;                                                  // create cache key for reservation
-  const cacheExpiration = 300;                                                                      // cache expiration time in seconds (5 minutes)
+  const cacheExpiration = EXPIRATION_TIME;                                                          // cache expiration time in seconds (5 minutes)
 
   try {
     // 1. try to connect to redis
@@ -544,8 +545,7 @@ const getReservation = async (req, res) => {
 
     // 2. if there is no cache for this, look in db
     const dbType = process.env.DB_TYPE;                                                             // type of db currently using (postgres or mongo)
-    const dbInstance = dbType === 'mongo' ? await require('./dbMongo')() : null;                    // initialize process
-    const { reservationDAO } = DAOFactory(dbType, dbInstance);                                      // get DAO instance for reservations
+    const { reservationDAO } = DAOFactory(dbType);                                                  // get DAO instance for reservations
     
     const reservation = await reservationDAO.getReservation(req.params.id);                         // retrieve reservation from db
     if (!reservation) return res.status(404).json({ message: 'Reserva no encontrada' });            // if reservation is not found, return 404
@@ -565,17 +565,16 @@ const getReservation = async (req, res) => {
 
 const deleteReservation = async (req, res) => {
   try {
-    const dbType = process.env.DB_TYPE; 
-    const dbInstance = dbType === 'mongo' ? await require('./dbMongo')() : null; 
-    const { reservationDAO } = DAOFactory(dbType, dbInstance); 
+    const dbType = process.env.DB_TYPE;                                                             // type of db currently using (postgres or mongo)
+    const { reservationDAO } = DAOFactory(dbType);                                                  // get DAO instance for reservations
     
-    const deletedReservation = await reservationDAO.deleteReservation(req.params.id);
-    await redisClient.del(`reservation:${deletedReservation.id}`);
+    const deletedReservation = await reservationDAO.deleteReservation(req.params.id);               // delete reservation from db
+    await redisClient.del(`reservation:${getEntityId(deletedReservation, dbType)}`);                // delete reservation from cache
 
-    res.json({ message: 'Reservación eliminada correctamente.', reservation: deletedReservation });
+    res.json({ message: 'Reservación eliminada correctamente.', reservation: deletedReservation }); // return deleted reservation
   } catch (error) {
-    console.error('Error eliminando reserva:', error);
-    res.status(500).json({ message: 'Error eliminando reserva', error: error.message || error });
+    console.error('Error eliminando reserva:', error);                                              // log error
+    res.status(500).json({ message: 'Error eliminando reserva', error: error.message || error });   // return error
   }
 };
 
@@ -593,22 +592,24 @@ const deleteReservation = async (req, res) => {
 const registerOrder = async (req, res) => {
   const { user_id, restaurant_id, menu_id, order_time, status } = req.body;
   try {
-    const dbType = process.env.DB_TYPE; 
-    const dbInstance = dbType === 'mongo' ? await require('./dbMongo')() : null; 
-    const { orderDAO } = DAOFactory(dbType, dbInstance); 
+    const dbType = process.env.DB_TYPE;                                                             // type of db currently using (postgres or mongo)
+    const { orderDAO } = DAOFactory(dbType);                                                        // get DAO instance for orders
 
-    const newOrder = await orderDAO.registerOrder(user_id, restaurant_id, menu_id, order_time, status);
-    await redisClient.del(`reservation:${newOrder.id}`);
-    res.status(201).json(newOrder);
+    const newOrder = await orderDAO.registerOrder(user_id, restaurant_id, menu_id, order_time, status); // register new order in db
+    await redisClient.del(`order:${getEntityId(newOrder, dbType)}`);                                // delete order from cache
+    res.status(201).json(newOrder);                                                                 // return new order
   } catch (error) {
-    console.error('Error registrando orden:', error);
-    res.status(500).json({ message: 'Error registrando orden', error: error.message || error });
+    console.error('Error registrando orden:', error);                                               // log error
+    res.status(500).json({ message: 'Error registrando orden', error: error.message || error });    // return error
   }
 };
 
+/* --------------------------------------------------------------------- */
+// GET - GET ORDER BY ID
+
 const getOrder = async (req, res) => {
   const cacheKey = `order:${req.params.id}`;                                                        // create cache key for order
-  const cacheExpiration = 300;                                                                      // cache expiration time in seconds (5 minutes)
+  const cacheExpiration = EXPIRATION_TIME;                                                          // cache expiration time in seconds (5 minutes)
 
   try {
     // 1. try to connect to redis    
@@ -620,8 +621,7 @@ const getOrder = async (req, res) => {
 
     // 2. if there is no cache for this, look in db
     const dbType = process.env.DB_TYPE;                                                             // type of db currently using (postgres or mongo)
-    const dbInstance = dbType === 'mongo' ? await require('./dbMongo')() : null;                    // initialize process
-    const { orderDAO } = DAOFactory(dbType, dbInstance);                                            // get DAO instance for orders
+    const { orderDAO } = DAOFactory(dbType);                                                        // get DAO instance for orders
     
     const order = await orderDAO.getOrder(req.params.id);                                           // retrieve order from db
     if (!order) return res.status(404).json({ message: 'Orden no encontrada' });                    // if order is not found, return 404
@@ -636,6 +636,133 @@ const getOrder = async (req, res) => {
   }
 };
 
-module.exports = {registerUser, cloneUserToMongo, loginUser, getUser, updateUser, deleteUser,
+/* ============================================================================================== */
+// ELASTIC SEARCH INDEXING
+
+/* --------------------------------------------------------------------- */
+// INDEX PRODUCT
+
+const indexProduct = async(product) => {
+  try {
+    await elasticClient.index({
+      index: 'products',
+      id: product.id.toString(),
+      body: {
+        name: product.name,
+        description: product.description,
+        category: product.category,
+        restaurant_id: product.restaurant_id
+      }
+    });
+  } catch (error) {
+    console.error('Error indexando producto en ElasticSearch:', error);
+  }
+};
+
+/* --------------------------------------------------------------------- */
+// DELETE PRODUCT FROM ELASTIC
+
+const deleteFromElastic = async (productId) => {
+  try {
+    await elasticClient.delete({
+      index: 'products',
+      id: productId.toString()
+    });
+  } catch (error) {
+    if (error.meta?.statusCode !== 404) {
+      console.error('Error eliminando producto de ElasticSearch:', error);
+    }
+  }
+}
+
+/* ============================================================================================== */
+// PRODUCTS
+
+/* Handles all product-related operations:
+ * - Product registration (POST)
+ * - Products information (GET)
+ * - Product deletion (DELETE)
+ */
+
+/* --------------------------------------------------------------------- */
+// POST - CREATE PRODUCT
+
+const registerProduct = async (req, res) => {
+  const { name, description, price, category, restaurant_id, is_active } = req.body;
+  
+  try {
+    const dbType = process.env.DB_TYPE;
+    const { productDAO } = DAOFactory(dbType);
+
+    const newProduct = await productDAO.registerProduct( 
+      name, description || 'Producto sin descripción', 
+      price, category, restaurant_id, is_active );
+
+    await indexProduct(newProduct);
+
+    await redisClient.del('products:all');
+    res.status(201).json(newProduct);
+  } catch (error) {
+    console.error('Error registrando producto:', error);
+    res.status(500).json({ message: 'Error registrando producto', error: error.message || error });
+  }
+};
+
+/* --------------------------------------------------------------------- */
+// GET - ALL PRODUCTS
+
+const getProducts = async (req, res) => {
+  const cacheKey = 'products:all';                                                                  // unique key for this query
+  const cacheExpiration = EXPIRATION_TIME;                                                          // expiration time
+
+  try {
+    // 1. try to connect to redis
+    const cachedProducts = await redisClient.get(cacheKey);                                         // get info from cache
+    if (cachedProducts) {                                                                           // if info is in cache
+      console.log('Got products from Redis');                                                       // log a message
+      return res.json(JSON.parse(cachedProducts));                                                  // return cached products
+    }
+
+    // 2. if there is no cache for this, look in db
+    const dbType = process.env.DB_TYPE;                                                             // type of db currently using (postgres or mongo)
+    const { productDAO } = DAOFactory(dbType);                                                      // get product DAO
+
+    const products = await productDAO.getProducts();                                                // call the DAO's method to get products
+
+    // 3. save info in Redis
+    await redisClient.setex(cacheKey, cacheExpiration, JSON.stringify(products));                   // save info in Redis with expiration time
+    console.log('Stored products in Redis');                                                        // log a message
+    res.json(products);                                                                             // return products
+  } catch (error) {                                                                                 // if there is an error
+    console.error('Error obtiendo productos:', error);                                              // log the error
+    res.status(500).json({ message: 'Error obtiendo productos', error: error.message || error });   // return error
+  }
+};
+
+/* --------------------------------------------------------------------- */
+// DELETE - PRODUCT BY ID
+
+const deleteProduct = async (req, res) => {
+  const productId = req.params.id;
+
+  try {
+    // 1. get current db and user information
+    const dbType = process.env.DB_TYPE; 
+    const { productDAO } = DAOFactory(dbType); 
+
+    const deletedProduct = await productDAO.deleteProduct(productId);
+
+    await deleteFromElastic(productId);
+    await redisClient.del('products:all');
+
+    res.json({ message: 'Producto eliminado correctamente.', product: deletedProduct });
+  } catch (error) {
+    console.error('Error eliminando producto:', error);
+    res.status(500).json({ message: 'Error eliminando producto', error: error.message || error });
+  }
+};
+
+module.exports = { registerUser, cloneUserToMongo, loginUser, getUser, updateUser, deleteUser,
   registerMenu, getMenu, updateMenu, deleteMenu, getOrder, registerRestaurant, getRestaurants,
-  registerReservation, getReservation, deleteReservation, registerOrder};
+  registerReservation, getReservation, deleteReservation, registerOrder, registerProduct, getProducts,
+  deleteProduct };

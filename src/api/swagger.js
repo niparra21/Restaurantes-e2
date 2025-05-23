@@ -2,6 +2,7 @@
  * Mariann Marin Barquero    | Nicole Parra Valverde     | Stephanie Sandoval Camacho
  * I Semestre - 2025
  */
+
 const swaggerUi = require('swagger-ui-express');
 const yaml = require('yamljs');
 const swaggerDocument = yaml.load('./swagger.yml');

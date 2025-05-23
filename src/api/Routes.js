@@ -3,44 +3,47 @@
  * I Semestre - 2025
  */
 
-/**
- * In this file, we define the routes for our API using Express.js.
- * The routes are organized into different sections for user authentication,
- */
 const express = require('express');
-const {registerUser,cloneUserToMongo,loginUser,getUser,updateUser,deleteUser,registerMenu,getMenu,updateMenu,deleteMenu,getOrder,registerRestaurant,getRestaurants,registerReservation,getReservation,deleteReservation,registerOrder} = require('./Controller');
-const {authenticateJWT,isAdmin,canEdit} = require('./Middleware');
+const { registerUser, cloneUserToMongo, loginUser, getUser, updateUser, deleteUser, registerMenu, getMenu,
+  updateMenu, deleteMenu, getOrder, registerRestaurant, getRestaurants, registerReservation, getReservation, 
+  deleteReservation, registerOrder, registerProduct, getProducts, deleteProduct, searchProducts } = require('./Controller');
+const { authenticateJWT, isAdmin, canEdit } = require('./shared/Middleware');
 
 const router = express.Router();
 
+// Authentication
 router.post('/auth/register', registerUser);
 router.post('/auth/login', loginUser);
 router.post('/clone', cloneUserToMongo);
 
-// CRUD de usuarios
+// CRUD users
 router.get('/users/me', authenticateJWT, getUser);
 router.put('/users/:id', authenticateJWT, canEdit, updateUser);
 router.delete('/users/:id', authenticateJWT, canEdit, deleteUser);
 
-
-// CRUD de restaurante
+// CRUD restaurants
 router.post('/restaurants', authenticateJWT, isAdmin, registerRestaurant);
 router.get('/restaurants', authenticateJWT, getRestaurants);
 
-// CRUD de menú
+// CRUD menus
 router.post('/menus', authenticateJWT, isAdmin, registerMenu);
 router.get('/menus/:id', authenticateJWT, getMenu);
 router.put('/menus/:id', authenticateJWT, isAdmin, updateMenu);
 router.delete('/menus/:id', authenticateJWT, isAdmin, deleteMenu);
 
-// CRUD de reservaciones
+// CRUD reservations
 router.post('/reservations', authenticateJWT, registerReservation);
 router.get('/reservations/:id', authenticateJWT, getReservation);
 router.delete('/reservations/:id', authenticateJWT, deleteReservation);
 
-// CRUD de pedido
+// CRUD orders
 router.post('/orders', authenticateJWT, registerOrder);
 router.get('/orders/:id', authenticateJWT, getOrder);
+
+// CRUD products
+router.post('/products', authenticateJWT, isAdmin, registerProduct);
+router.get('/products', authenticateJWT, isAdmin, getProducts);
+router.delete('/products/:id', authenticateJWT, isAdmin, deleteProduct);
 
 router.get('/', (req, res) => {
     res.send('API funcionando correctamente en /api');
