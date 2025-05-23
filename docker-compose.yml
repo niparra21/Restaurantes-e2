@@ -218,7 +218,9 @@ services:
   # Servicio API
   api1:
     container_name: api1
-    build: .
+    build:
+      context: .
+      dockerfile: src/api/Dockerfile
     env_file:
       - .env
     environment:
@@ -248,7 +250,9 @@ services:
 
   api2:
     container_name: api2
-    build: .
+    build:
+      context: .
+      dockerfile: src/api/Dockerfile
     env_file:
       - .env
     environment:
@@ -270,6 +274,29 @@ services:
       - keycloak
       - redis
       - mongos
+    networks:
+      - backend-network
+
+  search:
+    build:
+      context: .
+      dockerfile: src/search/Dockerfile
+    env_file:
+      - .env
+    environment:
+      DB_USER: postgres
+      DB_PASSWORD: mitzy
+      DB_NAME: Restaurante
+      DB_HOST: db
+      DB_PORT: 5432
+      KEYCLOAK_URL: http://keycloak:8080
+      KEYCLOAK_REALM: reserva-restaurantes
+      KEYCLOAK_CLIENT_ID: api-restaurantes
+      JWT_SECRET: your_jwt_secret
+      REDIS_URL: redis://:${REDIS_PASSWORD}@redis:6379
+      ELASTICSEARCH_URL: http://elasticsearch:9200
+    ports:
+      - "5001:5001"
     networks:
       - backend-network
 
