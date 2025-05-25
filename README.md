@@ -16,7 +16,7 @@ El sistema de reservación de restaurantes es una plataforma digital basada en u
 ### Variables de Entorno
 Cree un archivo `.env` en la raíz del proyecto con las variables de entorno necesarias. En este caso, en la raíz se creó un archivo llamado `.envTemplate` con los nombres de las variables de entorno que se deben reemplazar.
 
-### 🗝️ Configuración del Realm en Keycloak
+### Configuración del Realm en Keycloak
 El sistema utiliza Keycloak como gestor de autenticación y autorización. Para configurar el Realm, se deben seguir los siguientes pasos:
 
 1. En el docker-compose.yml, en el servicio `keycloak`, se encontrarán dos líneas comentadas. Descoméntelas y, en su lugar, comente las líneas anteriores a estas para que obtenga la siguiente configuración:
@@ -63,7 +63,7 @@ docker-compose up --build -d
 ```
 Esto levantará todos los servicios: PostgreSQL, MongoDB, Redis, ElasticSearch, Keycloak junto con su base de datos y la API REST.
 
-### 📌 Consideraciones Importantes
+### Consideraciones Importantes
 - Antes de ejecutar el comando anterior, se debe haber devuelto la configuración de Keycloak a su estado original, es decir, que se debieron descomentar las líneas comentadas en el archivo `docker-compose.yml` y se tuvieron que comentar las líneas que se descomentaron anteriormente.
 - La variable de entorno `REINDEX_ON_START` se debe establecer en `false` ya que aun no existen productos en ninguna base de datos para reindexar. Una vez que existan productos, se puede establecer en `true` para reindexarlos.
 - La variable de entorno `DB_TYPE` se debe establecer en `postgres` o `mongo` según la base de datos que se desee utilizar.
@@ -115,84 +115,60 @@ sh.addShard("mongors1/mongors1n1:27017,mongors1n2:27017,mongors1n3:27017")
 sh.enableSharding("Restaurante")
 ```
 
-## CI/CD con GitHub Actions
+## 🤖 CI/CD con GitHub Actions
 
-Este proyecto incluye una integración continua básica usando **GitHub Actions**.
+Este proyecto incluye una integración continua básica usando **GitHub Actions** para asegurar la calidad y facilitar el despliegue.
 
-### Estructura
+### Estructura del Workflow
 
-El flujo de trabajo se encuentra en:
+El flujo de trabajo principal se encuentra en:
 
-.github/workflows/ci.yml
+`.github/workflows/ci.yml`
 
-markdown
-Copiar
-Editar
+### ¿Qué hace el Workflow?
 
-### ¿Qué hace el workflow?
-
-1. Ejecuta los tests definidos con Jest (`npm test`)
-2. Construye la imagen Docker del backend
+1. Ejecute los tests definidos con Jest (`npm test`)
+2. Construya la imagen Docker del backend
 3. La sube automáticamente a Docker Hub si los tests pasan
 
-### Configuración requerida en GitHub
+### Configuración Requerida en GitHub
 
-Ve a tu repositorio → *Settings* → *Secrets and variables* → *Actions* y agrega:
+Debe agregar sus credenciales de Docker Hub como *secrets* en su repositorio de GitHub:
+
+- Vaya a **Settings → Secrets and variables → Actions** y agregue:
 
 | Variable          | Descripción                         |
 |-------------------|-------------------------------------|
-| `DOCKER_USERNAME` | Tu usuario de Docker Hub            |
-| `DOCKER_PASSWORD` | Tu contraseña o token de Docker Hub |
+| `DOCKER_USERNAME` | Su usuario de Docker Hub            |
+| `DOCKER_PASSWORD` | Su contraseña o token de Docker Hub |
 
 ### Convención para los tags
 
 La imagen se sube como:
 
-docker.io/<tu_usuario>/restaurantes-e2:latest
+`docker.io/<tu_usuario>/restaurantes-e2:latest`
 
-makefile
-Copiar
-Editar
-
-Puedes modificar el nombre y tag directamente en el archivo `ci.yml`.
-
-
-##  Despliegue y Escalabilidad
-
-###  Requisitos previos
-
-- Docker y Docker Compose instalados
-- Archivo `.env` configurado con las variables necesarias:
-  
-Levantar todo el sistema
-
-* docker-compose up -d --build
-
-Esto desplegará:
-
-1. PostgreSQL y MongoDB con replicación y sharding
-2. Redis
-3. Keycloak + su base de datos
-4. NGINX como balanceador de carga
-5. Dos instancias del backend: api1 y api2
-6. Servicio de búsqueda (dummy)
-
+Se puede modificar el nombre y tag directamente en el archivo `ci.yml`.
 
 ### Escalabilidad
 
-Se levantan dos instancias del backend (api1, api2), accesibles a través de NGINX en:
+Se levantan dos instancias del backend (`api1`, `api2`), accesibles a través de NGINX en:
 
 * http://localhost/api/
 
-Puedes probar la distribución de carga con:
+Se puede probar la distribución de carga con:
 
-* while true; do curl http://localhost/api/ping; sleep 1; done
+``` bash
+while true; do curl http://localhost/api/ping; sleep 1; done
+```
 
-Y verás que las respuestas alternan entre los contenedores gracias al round-robin configurado en NGINX.
+Verá que las respuestas alternan entre los contenedores gracias al  round-robin configurado en NGINX.
 
-Balanceador de carga (NGINX)
-El archivo nginx.conf contiene:
+#### Balanceador de carga (NGINX)
 
+El archivo `nginx.conf` contiene la siguiente configuración
+
+``` conf
 upstream api_backend {
   server api1:5000;
   server api2:5000;
@@ -209,10 +185,10 @@ server {
     proxy_pass http://search_backend;
   }
 }
+```
 
-La ruta /api/ balancea entre instancias, mientras que /search/ redirige a un servicio de prueba.
-
-- Si se quiere revisar el estado del sharding, se puede hacer con el comando `sh.status()` en el shell de MongoDB.
+* La ruta `/api/` balancea entre instancias del backend.
+* La ruta `/search/` redirige a un servicio de búsqueda.
 
 ## ⚡ Uso de la API
 La API se utiliza para realizar operaciones con los principales objetos que maneja el sistema: usuarios, restaurantes, menús, órdenes, reservaciones y productos. A continuación, se incluyen los métodos disponibles para cada objeto:
