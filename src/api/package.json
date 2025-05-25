@@ -1,0 +1,31 @@
+{
+  "name": "api",
+  "version": "1.0.0",
+  "private": true,
+  "type": "commonjs",
+  "main": "Server.js",
+  "scripts": {
+    "start": "node Server.js",
+    "test": "jest"
+  },
+  "dependencies": {
+    "@elastic/elasticsearch": "^9.0.1",
+    "axios": "^1.8.4",
+    "bcryptjs": "^3.0.2",
+    "cors": "^2.8.5",
+    "dotenv": "^16.5.0",
+    "express": "^4.21.2",
+    "express-session": "^1.18.1",
+    "ioredis": "^5.6.1",
+    "jsonwebtoken": "^9.0.2",
+    "jwks-rsa": "^3.2.0",
+    "keycloak-admin": "^1.14.22",
+    "keycloak-connect": "^26.1.1",
+    "mongodb": "^6.16.0",
+    "pg": "^8.14.1"
+  },
+  "devDependencies": {
+    "jest": "^29.7.0",
+    "supertest": "^7.1.1"
+  }
+}
