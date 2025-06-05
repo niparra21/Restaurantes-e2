@@ -260,3 +260,95 @@ El sistema de búsquedas se utiliza para realizar consultas complejas de los pro
 Se incluye un video que muestra la funcionalidad del sistema en acción.
 
 [Video Demostrativo](https://drive.google.com/drive/folders/1D_IdkLbZQNpx5ySEPajmJff1t3Pw8g1x) 
+
+
+## ----------------------------------------------------------------------------------
+## 🗄️ Paso a Paso para Inicializar el Data Warehouse (Hive)
+
+1. Levanta todos los servicios. Desde la raíz del proyecto
+
+``` bash
+docker-compose up --build
+``` 
+
+2. 🐝 Ingresa al contenedor del Hive Server
+
+``` bash
+docker exec -it restaurantes-e2-hive-server-1 bash
+``` 
+
+3. Inicializa el esquema del metastore
+
+Dentro del contenedor de Hive Server, ejecuta:
+
+``` bash
+schematool -dbType postgres -initSchema
+```
+
+Esto inicializa el esquema del metascore, crea las tablas internas necesarias para que Hive funcione.
+
+4. Posterior a eso se ejecuta el siguiente comando (desde la raíz del proyecto):
+
+``` bash
+docker cp db/star-schema.hql restaurantes-e2-hive-server-1:/tmp/star-schema.hql
+```
+
+Este comando copia el archivo [Script de creación del datawarehouse](db/star-schema.hql) desde la máquina local al contenedor del hive-server
+
+5. 🚀 Inicia el servicio HiveServer2
+
+Dentro del contenedor de Hive Server:
+
+``` bash
+hive --service hiveserver2 &
+```
+Esto habilita el puerto JDBC (10000) necesario para ejecutar comandos con Beeline.
+
+6. Verifica que HiveServer2 está corriendo
+
+Dentro del contenedor, ejecuta:
+
+``` bash
+netstat -tulnp
+```
+
+Debería devolverle algo así:
+
+Active Internet connections (only servers)
+Proto Recv-Q Send-Q Local Address           Foreign Address         State       PID/Program name
+tcp        0      0 127.0.0.11:39917        0.0.0.0:*               LISTEN      -
+tcp        0      0 0.0.0.0:10002           0.0.0.0:*               LISTEN      226/java
+tcp        0      0 0.0.0.0:10000           0.0.0.0:*               LISTEN      226/java
+udp        0      0 127.0.0.11:33011        0.0.0.0:*                           -
+
+Note que el 0 0.0.0.0:10000 está en estado LISTEN
+
+7. Ejecuta el script para crear las tablas del data warehouse
+
+Dentro del contenedor de Hive Server:
+
+``` bash
+beeline -u jdbc:hive2://localhost:10000 -n hive -f /tmp/star-schema.hql
+```
+
+8.  🔍 Verifica las tablas creadas
+
+Abre el cliente Beeline dentro del contenedor:
+
+``` bash
+beeline -u jdbc:hive2://localhost:10000 -n hive
+```
+
+Dentro de Beeline se puede ejecutar:
+
+``` bash
+SHOW TABLES;
+```
+Muestra las tablas existentes
+
+``` bash
+DESCRIBE fact_orders;
+```
+Este muestra la estructura de una tabla, cambie `fact_orders` por la tabla que necesite observar
+
+

@@ -300,6 +300,64 @@ services:
     networks:
       - backend-network
 
+# Hadoop and Hive
+  hadoop-namenode:
+    image: bde2020/hadoop-namenode:2.0.0-hadoop2.7.4-java8
+    environment:
+      CLUSTER_NAME: ${CLUSTER_NAME}
+    volumes:
+      - hadoop_namenode:/hadoop/dfs/name
+    ports:
+      - "9870:9870"
+    networks:
+      - backend-network
+
+  hadoop-datanode:
+    image: bde2020/hadoop-datanode:2.0.0-hadoop2.7.4-java8
+    environment:
+      - CORE_CONF_fs_defaultFS=hdfs://hadoop-namenode:8020
+    volumes:
+      - hadoop_datanode:/hadoop/dfs/data
+    networks:
+      - backend-network
+
+  hive-metastore:
+    image: postgres:12
+    environment:
+      POSTGRES_DB: metastore
+      POSTGRES_USER: hive
+      POSTGRES_PASSWORD: hive
+    ports:
+      - "5433:5432"
+    volumes:
+      - metastore_data:/var/lib/postgresql/data
+    networks:
+      - backend-network
+
+  hive-server:
+    image: bde2020/hive:2.3.2-postgresql-metastore
+    environment:
+      CORE_CONF_fs_defaultFS: hdfs://hadoop-namenode:8020
+      HIVE_METASTORE_DB_TYPE: postgres
+      HIVE_METASTORE_HOST: hive-metastore
+      HIVE_METASTORE_PORT: 5432
+      HIVE_METASTORE_DB_NAME: metastore
+      HIVE_METASTORE_DB_USER: hive
+      HIVE_METASTORE_DB_PASS: hive
+    volumes:
+      - ./hive/hive-site.xml:/opt/hive/conf/hive-site.xml
+    ports:
+      - "10000:10000"
+    depends_on:
+      - hadoop-namenode
+      - hadoop-datanode
+      - hive-metastore
+    networks:
+      - backend-network
+
+
+
+
 # Configuración de volúmenes
 volumes:
   db-data:
@@ -314,6 +372,9 @@ volumes:
   config-data2:
   config-data3:
   es-data:
+  metastore_data:
+  hadoop_namenode:
+  hadoop_datanode:
 
 # Configuración de red
 networks:
