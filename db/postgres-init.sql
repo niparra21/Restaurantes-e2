@@ -17,10 +17,10 @@ CREATE TABLE users (
 -- Create Restaurants Table
 CREATE TABLE restaurants (
     id SERIAL PRIMARY KEY,
-    name VARCHAR(100) NOT NULL,
+    name VARCHAR(255) NOT NULL,
     address VARCHAR(255) NOT NULL,
     city VARCHAR(255) NOT NULL, ----added city field, controller and daoPostgress
-    phone VARCHAR(20),
+    phone VARCHAR(255),
     owner_id INT REFERENCES users(id) ON DELETE CASCADE,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
@@ -58,13 +58,6 @@ CREATE TABLE orders (
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
- --------added menu_items table
-CREATE TABLE menu_items (
-    id SERIAL PRIMARY KEY,
-    menu_id INT REFERENCES menus(id) ON DELETE CASCADE,
-    product_id INT REFERENCES products(id),
-    quantity INT DEFAULT 1
-);
 
 -- Create Products Table
 CREATE TABLE products (
@@ -77,4 +70,11 @@ CREATE TABLE products (
     is_active BOOLEAN DEFAULT TRUE,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE menu_items (
+    id SERIAL PRIMARY KEY,
+    menu_id INT REFERENCES menus(id) ON DELETE CASCADE,
+    product_id INT REFERENCES products(id),
+    quantity INT DEFAULT 1
 );

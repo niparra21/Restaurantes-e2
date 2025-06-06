@@ -352,3 +352,38 @@ DESCRIBE fact_orders;
 Este muestra la estructura de una tabla, cambie `fact_orders` por la tabla que necesite observar
 
 
+## ---------
+# para rellenar la base
+
+dudo que esto se deba de poner en el readme pero aquí les va:
+
+instalen esta cochinada: npm install pg @faker-js/faker **(creo que no es necesario para que ya con los package.json está creo)**
+
+luego borren el volumen de postgres porque cambiamos la estrcutura de la base y ocupamos que esté vacía para recrearla, así:
+
+docker volume rm restaurantes-e2_db-data
+
+luego de eso hagan el docker-compose up --build como de costumbre
+
+se esperan a que el contenedor de restaurantes postgres esté ready para aceptar connections
+y le dan
+
+node db/fill_postgres.js
+
+deberia meterles los datos en la base. Y finnnnnn
+
+Bueno no, si quieren comprobar que están ahí los datos hacen:
+
+docker exec -it restaurantes-e2-db-1 psql -U postgres -d Restaurante
+
+y luego cualquiera de estas consultas sql normales a como las prefieran:
+
+SELECT * FROM users LIMIT 5;
+SELECT * FROM restaurants LIMIT 5;
+SELECT * FROM products LIMIT 5;
+SELECT * FROM menus LIMIT 5;
+SELECT * FROM menu_items LIMIT 5;
+SELECT * FROM reservations LIMIT 5;
+SELECT * FROM orders LIMIT 5;
+
+ahora sí, fin?
