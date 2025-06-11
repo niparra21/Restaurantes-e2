@@ -387,3 +387,21 @@ SELECT * FROM reservations LIMIT 5;
 SELECT * FROM orders LIMIT 5;
 
 ahora sí, fin?
+
+## No, aún no
+
+con respecto al airflow, hay que super mega armarse de paciencia. Yo estuve haciendo primero lo siguiente:
+
+``` bash
+docker-compose build --no-cache
+```
+y luego, a menos de que les haya salido errores XD
+
+``` bash
+docker-compose up
+```
+
+En una máquina como la mía tardó unos 23 minutos, incluso más para acceder a http://localhost:8081
+Quizá en sus compus sea más rápido :)
+
+Desde ese link pueden ingresar con admin, admin. Para la fecha en la que pongo esto no hay dags así que no van a ver nada jeje. Proximas actualizaciones aquí, en el diario de Manani cayendo en demencia.
