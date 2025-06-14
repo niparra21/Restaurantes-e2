@@ -1,0 +1,42 @@
+product_id,name,price,category,is_active
+1,Hamburguesa Clásica,5.99,Comida rápida,True
+2,Papas Fritas,2.49,Acompañamientos,True
+3,Coca-Cola,1.99,Bebidas,True
+4,Pizza Margarita,7.99,Italiana,True
+5,Ensalada César,4.99,Ensaladas,True
+6,Jugo Natural de Naranja,2.79,Bebidas,True
+7,Taco al Pastor,3.99,Mexicana,True
+8,Quesadilla de Pollo,4.49,Mexicana,True
+9,Agua Mineral,1.29,Bebidas,True
+10,Sushi Roll,8.99,Japonesa,True
+11,Tempura de Camarón,6.99,Japonesa,True
+12,Ramen,7.49,Japonesa,True
+13,Pollo a la Parrilla,5.49,Parrilla,True
+14,Costillas BBQ,9.99,Parrilla,True
+15,Ensalada Mixta,3.99,Ensaladas,True
+16,Spaghetti Boloñesa,6.99,Italiana,True
+17,Lasaña,7.99,Italiana,True
+18,Pan de Ajo,2.49,Acompañamientos,True
+19,Nachos con Queso,3.99,Mexicana,True
+20,Guacamole,2.99,Mexicana,True
+21,Agua de Horchata,1.99,Bebidas,True
+22,Café Americano,1.49,Bebidas,True
+23,Té Helado,1.79,Bebidas,True
+24,Brownie,2.99,Postres,True
+25,Helado de Vainilla,2.49,Postres,True
+26,Flan,2.99,Postres,True
+27,Sopa Azteca,4.99,Mexicana,True
+28,Tostadas de Pollo,3.99,Mexicana,True
+29,Croissant,2.29,Panadería,True
+30,Bagel,2.19,Panadería,True
+31,Jugo de Manzana,2.49,Bebidas,True
+32,Sándwich de Jamón,3.49,Comida rápida,True
+33,Hot Dog,2.99,Comida rápida,True
+34,Empanada de Pollo,2.79,Panadería,True
+35,Muffin de Arándanos,2.59,Postres,True
+36,Ensalada de Frutas,3.49,Ensaladas,True
+37,Sopa de Pollo,4.49,Sopas,True
+38,Té Verde,1.69,Bebidas,True
+39,Smoothie de Fresa,3.29,Bebidas,True
+40,Pizza Pepperoni,8.49,Italiana,True
+41,Sopa Miso,3.99,Japonesa,True

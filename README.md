@@ -402,6 +402,34 @@ docker-compose up
 ```
 
 En una máquina como la mía tardó unos 23 minutos, incluso más para acceder a http://localhost:8081
+OJITO CON EL ENLACE, no es https://localhost:8081/ es SIN LA S (re loco chaval, estuve 37 años con problemas por eso)
+
 Quizá en sus compus sea más rápido :)
 
 Desde ese link pueden ingresar con admin, admin. Para la fecha en la que pongo esto no hay dags así que no van a ver nada jeje. Proximas actualizaciones aquí, en el diario de Manani cayendo en demencia.
+
+## ----------------------------------------------------------------------------------
+## Configuración y ejecución del entorno ETL
+
+(Airflow suele necesitar de 4GB, en caso de ser necesario configurar la RAM asignada a Docker-Desktop)
+
+1. Levantar los servicios 
+
+``` bash
+docker-compose up
+```
+Esto puede ser muy pesado así que se puede levantar solo los necesarios de esta forma: 
+
+``` bash
+docker-compose up db airflow-db airflow-webserver airflow-scheduler airflow-init
+```
+
+2. Ejecutar el DAG de extracción
+
+  * Acceder a http://localhost:8081 con las credenciales (en este caso user 'admin', password 'admin')
+  * Activar el DAG (toggle ON)
+  * Hacer clic en el botón de “play” (Trigger DAG) para ejecutarlo manualmente
+  * Se puede monitorear el progreso en la pestaña “Graph View” o “Tree View”
+  * Una vez hayan terminado todas las tareas verificar la creación de los archivos en 
+      [Data](airflow/dags/data/)
+
