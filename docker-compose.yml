@@ -208,13 +208,6 @@ services:
     networks:
       - backend-network
 
-  # search:
-  #   image: nginxdemos/hello
-  #   ports:
-  #     - "4000:80"
-  #   networks:
-  #     - backend-network
-
   # Servicio API
   api1:
     container_name: api1
@@ -430,6 +423,52 @@ services:
       - |
         airflow db upgrade
         airflow users create --username admin --password admin --firstname Admin --lastname User --role Admin --email admin@example.com
+    networks:
+      - backend-network
+
+  # Apache Spark (master)
+  spark-master:
+    image: apache/spark:3.5.1
+    container_name: spark-master
+    command: >
+        bash -c "
+        mkdir -p /opt/spark/jars &&
+        cp /extra-jars/*.jar /opt/spark/jars/ 2>/dev/null || true &&
+        /opt/spark/bin/spark-class org.apache.spark.deploy.master.Master
+        --host ${SPARK_MASTER_HOST}
+        --port ${SPARK_MASTER_PORT}
+        --webui-port ${SPARK_MASTER_WEBUI_PORT}"
+    environment:
+      - SPARK_MASTER_HOST=${SPARK_MASTER_HOST}
+      - SPARK_MASTER_PORT=${SPARK_MASTER_PORT}
+      - SPARK_MASTER_WEBUI_PORT=${SPARK_MASTER_WEBUI_PORT}
+    ports:
+      - "${SPARK_WEBUI_EXPOSED_PORT:-8082}:${SPARK_MASTER_WEBUI_PORT}"
+      - "${SPARK_MASTER_EXPOSED_PORT:-7077}:${SPARK_MASTER_PORT}"
+    depends_on:
+      db:
+        condition: service_healthy
+    volumes:
+      - ./spark-apps:/opt/spark-apps
+      - ./jars:/extra-jars
+    networks:
+      - backend-network
+
+  # Apache Spark (worker)
+  spark-worker:
+    image: apache/spark:3.5.1
+    container_name: spark-worker
+    command: >
+      /opt/spark/bin/spark-class org.apache.spark.deploy.worker.Worker
+      spark://${SPARK_MASTER_HOST}:${SPARK_MASTER_PORT}
+    depends_on:
+      - spark-master
+    environment:
+      - SPARK_WORKER_CORES=${SPARK_WORKER_CORES}
+      - SPARK_WORKER_MEMORY=${SPARK_WORKER_MEMORY}
+    volumes:
+      - ./spark-apps:/opt/spark-apps
+      - ./jars:/extra-jars
     networks:
       - backend-network
 
