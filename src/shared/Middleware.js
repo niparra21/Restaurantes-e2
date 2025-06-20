@@ -24,7 +24,7 @@ function getKey(header, callback) {
 
 const authenticateJWT = (req, res, next) => {
   const authHeader = req.headers['authorization'];
-  const token = authHeader && authHeader.split(' ')[1];
+  const token = authHeader?.split(' ')[1];
 
   if (!token) return res.status(401).json({ message: 'Token no proporcionado' });
 

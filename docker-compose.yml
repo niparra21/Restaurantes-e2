@@ -300,6 +300,23 @@ services:
     networks:
       - backend-network
 
+  sonarqube:
+    image: sonarqube:community
+    ports:
+      - "9000:9000"
+    environment:
+      - SONAR_ES_BOOTSTRAP_CHECKS_DISABLE=true
+    networks:
+      - backend-network
+    volumes:
+      - sonarqube_data:/opt/sonarqube/data
+      - sonarqube_extensions:/opt/sonarqube/extensions
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9000/api/system/status"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
 # Configuración de volúmenes
 volumes:
   db-data:
@@ -314,6 +331,9 @@ volumes:
   config-data2:
   config-data3:
   es-data:
+  sonarqube_data:
+  sonarqube_extensions:
+  codeclimate_config:
 
 # Configuración de red
 networks:

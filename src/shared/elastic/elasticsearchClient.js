@@ -28,7 +28,8 @@ const initElasticSearch = async () => {
         console.log('▫️  Conectado a ElasticSearch exitosamente!');
       } catch (err) {
         console.log(`▫️  No se pudo conectar a ElasticSearch. Esperando 5 segundos...`);
-        await new Promise(resolve => setTimeout(resolve, 5000)); // Wait 5 seconds between attempts
+        console.error('▫️  Detalle del error de conexión:', err.message);
+        await new Promise(resolve => setTimeout(resolve, 5000));
       }
     }
 

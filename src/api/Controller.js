@@ -87,6 +87,10 @@ const cloneUserToMongo = async (req, res) => {
 const loginUser = async (req, res) => {
   const { username, password } = req.body;
 
+  if (!username || !password) {
+    return res.status(400).json({ message: 'Faltan campos obligatorios' });
+  }
+
   try {
     const response = await axios.post(
       `${process.env.KEYCLOAK_URL}/realms/${process.env.KEYCLOAK_REALM}/protocol/openid-connect/token`,

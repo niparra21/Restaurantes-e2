@@ -5,17 +5,15 @@
 
 const request = require('supertest');
 const express = require('express');
-const router = require('./Routes');
+const router = require('../Routes');
 
-jest.mock('../shared/Middleware', () => ({
+jest.mock('../../shared/Middleware', () => ({
   authenticateJWT: (req, res, next) => next(),
   isAdmin: (req, res, next) => next(),
   canEdit: (req, res, next) => next(),
 }));
 
-const controller = require('./Controller');
-
-jest.mock('./Controller', () => ({
+jest.mock('../Controller', () => ({
   registerUser: jest.fn((req, res) => {
     if (!req.body.password) {
       return res.status(400).json({ message: 'Contraseña requerida' });
@@ -197,4 +195,10 @@ describe('Pruebas de API', () => {
     expect(response.status).toBe(200);
     expect(response.body.message).toMatch(/eliminado/i);
   });
+});
+
+test('GET / debería responder con mensaje de funcionamiento', async () => {
+  const response = await request(app).get('/');
+  expect(response.status).toBe(200);
+  expect(response.text).toBe('API funcionando correctamente en /api');
 });

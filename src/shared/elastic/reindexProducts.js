@@ -45,7 +45,7 @@ const reindexAllProducts = async () => {
         name: product.name,                                                                         // product name
         description: product.description || 'Producto sin descripción',                             // product description
         category: product.category,                                                                 // product category
-        restaurant_id: (product.restaurant_id && product.restaurant_id.toString())                  // product restaurant id as string
+        restaurant_id: (product.restaurant_id?.toString())                                           // product restaurant id as string
       }
     ]);
 

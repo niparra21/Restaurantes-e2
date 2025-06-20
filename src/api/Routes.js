@@ -6,8 +6,8 @@
 const express = require('express');
 const { registerUser, cloneUserToMongo, loginUser, getUser, updateUser, deleteUser, registerMenu, getMenu,
   updateMenu, deleteMenu, getOrder, registerRestaurant, getRestaurants, registerReservation, getReservation, 
-  deleteReservation, registerOrder, registerProduct, getProducts, deleteProduct, searchProducts } = require('./Controller');
-const { authenticateJWT, isAdmin, canEdit } = require('../shared/Middleware');
+  deleteReservation, registerOrder, registerProduct, getProducts, deleteProduct } = require('./Controller');
+const { authenticateJWT, isAdmin, canEdit } = require('./shared/Middleware');
 
 const router = express.Router();
 
@@ -47,10 +47,6 @@ router.delete('/products/:id', authenticateJWT, isAdmin, deleteProduct);
 
 router.get('/', (req, res) => {
     res.send('API funcionando correctamente en /api');
-});
-
-router.get('/ping', (req, res) => {
-  res.send('pong desde ' + process.env.HOSTNAME);
 });
 
 module.exports = router;

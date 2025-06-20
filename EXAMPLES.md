@@ -43,6 +43,12 @@ A continuación, se presentan algunos ejemplos de cómo interactuar con la API R
     "password": "password"
 }
 ```
+
+**Notas sobre la entrada:**
+- La entrada debe tener tanto `username` como `password`.
+- Ambos campos deben ser tipo string.
+- Los datos del usuario deben haber sido registrados previamente en el sistema.
+
 **Respuesta:**
 ``` json
 {
@@ -50,6 +56,15 @@ A continuación, se presentan algunos ejemplos de cómo interactuar con la API R
     "refresh_token": "..."
 }
 ```
+
+**Notas sobre la salida:**
+- La salida debe tener tanto `access_token` como `refresh_token`.
+- El `access_token` se utiliza para permitir la entrada a los demás endpoints, según rol definido.
+- El `refresh_token` no se utiliza actualmente en el sistema. Cuando el token expira, el usuario debe volver a iniciar sesión.
+
+**Posibles códigos de respuesta:**
+- `200 OK`: Si la entrada es válida.
+- `401 Unauthorized`: Si la entrada es inválida.
 
 ### 3. Obtener información de usuario actual
 **GET** `http://localhost:5000/api/users/me`
