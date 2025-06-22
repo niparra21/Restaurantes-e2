@@ -19,7 +19,7 @@ CREATE TABLE restaurants (
     id SERIAL PRIMARY KEY,
     name VARCHAR(255) NOT NULL,
     address VARCHAR(255) NOT NULL,
-    city VARCHAR(255) NOT NULL, ----added city field, controller and daoPostgress
+    city VARCHAR(255) NOT NULL,
     phone VARCHAR(255),
     owner_id INT REFERENCES users(id) ON DELETE CASCADE,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
@@ -72,6 +72,7 @@ CREATE TABLE products (
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
+-- Create Menu Items Table
 CREATE TABLE menu_items (
     id SERIAL PRIMARY KEY,
     menu_id INT REFERENCES menus(id) ON DELETE CASCADE,

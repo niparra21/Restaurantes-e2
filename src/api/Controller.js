@@ -342,13 +342,14 @@ const deleteUser = async (req, res) => {
 // POST - CREATE RESTAURANT
 
 const registerRestaurant = async (req, res) => {
-  const { name, address, phone, owner_id } = req.body;
+  const { name, address, city, phone, owner_id } = req.body;
+  console.log('Valores recibidos:', { name, address, city, phone, owner_id });
   try {
     // 1. get the db type to redirect to the correct DAO
     const dbType = process.env.DB_TYPE;                                                             // could be 'postgres' o 'mongo'
     const { restaurantDAO } = DAOFactory(dbType);                                                   // get the DAO dynamically
 
-    const newRestaurant = await restaurantDAO.registerRestaurant(name, address, phone, owner_id);   // get DAO method to register restaurant
+    const newRestaurant = await restaurantDAO.registerRestaurant(name, address, city, phone, owner_id);   // get DAO method to register restaurant
     console.log('Deleted restaurants from Redis');                                                  // log a message 
 
     // 2. remove cache and return

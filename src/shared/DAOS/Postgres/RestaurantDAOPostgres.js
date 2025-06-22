@@ -11,13 +11,13 @@ const pool = require('../../db');
 
 class RestaurantDAOPostgres {
   
-  async registerRestaurant(name, address, phone, owner_id){
+  async registerRestaurant(name, address, city, phone, owner_id){
     try {
       const result = await pool.query(
-        `INSERT INTO restaurants (name, address, phone, owner_id, created_at, updated_at)
-        VALUES ($1, $2, $3, $4, NOW(), NOW())
+        `INSERT INTO restaurants (name, address, city, phone, owner_id, created_at, updated_at)
+        VALUES ($1, $2, $3, $4, $5, NOW(), NOW())
         RETURNING *`,
-        [name, address, phone, owner_id]
+        [name, address, city, phone, owner_id]
       );
       return result.rows[0];
     } catch (error) {
@@ -29,7 +29,7 @@ class RestaurantDAOPostgres {
   
   async getRestaurants() {
     try {
-      const result = await pool.query('SELECT id, name, address, phone, owner_id FROM restaurants');
+      const result = await pool.query('SELECT id, name, address, city, phone, owner_id FROM restaurants');
       return result.rows;
     } catch (error) {
       console.error("Error al obtener restaurantes:", error);
