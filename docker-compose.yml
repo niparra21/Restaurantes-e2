@@ -428,7 +428,7 @@ services:
 
   # Apache Spark (master)
   spark-master:
-    image: apache/spark:3.5.1
+    image: spark-custom:3.5.1
     container_name: spark-master
     command: >
         bash -c "
@@ -451,12 +451,13 @@ services:
     volumes:
       - ./spark-apps:/opt/spark-apps
       - ./jars:/extra-jars
+      - ./.env:/opt/spark-apps/.env
     networks:
       - backend-network
 
   # Apache Spark (worker)
   spark-worker:
-    image: apache/spark:3.5.1
+    image: spark-custom:3.5.1
     container_name: spark-worker
     command: >
       /opt/spark/bin/spark-class org.apache.spark.deploy.worker.Worker
@@ -469,9 +470,9 @@ services:
     volumes:
       - ./spark-apps:/opt/spark-apps
       - ./jars:/extra-jars
+      - ./.env:/opt/spark-apps/.env
     networks:
       - backend-network
-
 
 # Configuración de volúmenes
 volumes:
