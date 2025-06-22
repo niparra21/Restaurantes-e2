@@ -1,10 +1,6 @@
 from pyspark.sql import SparkSession
 from pyspark.sql.functions import *
-from dotenv import load_dotenv
 import os
-
-# 1. load the .env variables from the container
-load_dotenv('/opt/spark-apps/.env') 
 
 db_url = os.getenv("SPARK_POSTGRES_HOST")
 db_port = os.getenv("DB_PORT")

@@ -3,6 +3,7 @@ services:
   # Postgres
   db:
     image: postgres
+    container_name: db
     environment:
       POSTGRES_USER: ${DB_USER}
       POSTGRES_PASSWORD: ${DB_PASSWORD}
@@ -19,7 +20,6 @@ services:
       interval: 5s
       timeout: 5s
       retries: 5
-
 
   # MongoDB Shard Nodes
   mongors1n1:
@@ -118,6 +118,7 @@ services:
   # Redis
   redis:
     image: redis
+    container_name: redis
     ports:
       - "6379:6379"
     volumes:
@@ -158,6 +159,7 @@ services:
   # Base de datos para Keycloak
   keycloak-db:
     image: postgres
+    container_name: keycloak-db
     environment:
       POSTGRES_DB: ${POSTGRES_DB}
       POSTGRES_USER: ${POSTGRES_USER}
@@ -175,6 +177,7 @@ services:
   # Servicio Keycloak
   keycloak:
     image: quay.io/keycloak/keycloak:24.0.1
+    container_name: keycloak
     command: start-dev
     #command: start-dev --import-realm
     environment:
@@ -197,6 +200,7 @@ services:
 
   nginx:
     image: nginx:latest
+    container_name: nginx
     ports:
       - "80:80"
     volumes:
@@ -274,6 +278,7 @@ services:
     build:
       context: .
       dockerfile: src/search/Dockerfile
+    container_name: search
     env_file:
       - .env
     environment:
@@ -296,6 +301,7 @@ services:
 # Hadoop and Hive
   hadoop-namenode:
     image: bde2020/hadoop-namenode:2.0.0-hadoop2.7.4-java8
+    container_name: hadoop-namenode
     environment:
       CLUSTER_NAME: ${CLUSTER_NAME}
     volumes:
@@ -307,6 +313,7 @@ services:
 
   hadoop-datanode:
     image: bde2020/hadoop-datanode:2.0.0-hadoop2.7.4-java8
+    container_name: hadoop-datanode
     environment:
       - CORE_CONF_fs_defaultFS=hdfs://hadoop-namenode:8020
     volumes:
@@ -316,6 +323,7 @@ services:
 
   hive-metastore:
     image: postgres:12
+    container_name: hive-metastore
     environment:
       POSTGRES_DB: metastore
       POSTGRES_USER: hive
@@ -329,6 +337,7 @@ services:
 
   hive-server:
     image: bde2020/hive:2.3.2-postgresql-metastore
+    container_name: hive-server
     environment:
       CORE_CONF_fs_defaultFS: hdfs://hadoop-namenode:8020
       HIVE_METASTORE_DB_TYPE: postgres
@@ -350,6 +359,7 @@ services:
 
   airflow-db:
     image: postgres:15
+    container_name: airflow-db
     environment:
       - POSTGRES_USER=airflow
       - POSTGRES_PASSWORD=airflow
@@ -364,6 +374,7 @@ services:
       context: ./airflow
       dockerfile: Dockerfile
     image: custom-airflow:2.9.1
+    container_name: airflow-webserver
     depends_on:
       - airflow-db
     environment:
@@ -386,6 +397,7 @@ services:
       context: ./airflow
       dockerfile: Dockerfile
     image: custom-airflow:2.9.1
+    container_name: airflow-scheduler
     depends_on:
       - airflow-webserver
     environment:
@@ -406,6 +418,7 @@ services:
       context: ./airflow
       dockerfile: Dockerfile
     image: custom-airflow:2.9.1
+    container_name: airflow-init
     depends_on:
       - airflow-db
     environment:
@@ -451,7 +464,8 @@ services:
     volumes:
       - ./spark-apps:/opt/spark-apps
       - ./jars:/extra-jars
-      - ./.env:/opt/spark-apps/.env
+    env_file:
+      - .env
     networks:
       - backend-network
 
@@ -470,7 +484,23 @@ services:
     volumes:
       - ./spark-apps:/opt/spark-apps
       - ./jars:/extra-jars
-      - ./.env:/opt/spark-apps/.env
+    env_file:
+      - .env
+    networks:
+      - backend-network
+
+  # Apache Superset
+  superset:
+    image: apache/superset
+    container_name: superset
+    ports:
+      - "8088:8088"
+    depends_on:
+      - db
+    environment:
+      - SUPERSET_SECRET_KEY=${SUPERSET_SECRET_KEY}
+    volumes:
+      - ./superset:/app/superset_home
     networks:
       - backend-network
 
