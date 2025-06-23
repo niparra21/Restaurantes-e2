@@ -47,7 +47,7 @@ peak_hours.show()
 # analysis 3: monthly order growth (completed vs cancelled)
 monthly_orders = df_orders.withColumn("month", month("order_time")) \
     .groupBy("month") \
-    .pivot("status", ["completed", "cancelled"]) \
+    .pivot("status", ["delivered", "cancelled"]) \
     .agg(count("*")) \
     .orderBy("month")
 monthly_orders.show()

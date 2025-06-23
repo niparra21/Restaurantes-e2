@@ -3,10 +3,11 @@
  * I Semestre - 2025
  */
 
-/*
-This code is a MongoDB Data Access Object (DAO) for managing orders in a restaurant application.
-It provides methods to register and retrieve orders from the postgres database.
-*/ 
+/**
+ * This code is a MongoDB Data Access Object (DAO) for managing orders in a restaurant application.
+ * It provides methods to register and retrieve orders from the postgres database.
+ */ 
+
 const pool = require('../../db'); 
 
 class OrderDAOPostgres {

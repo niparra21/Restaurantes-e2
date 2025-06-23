@@ -2,6 +2,16 @@
  * Mariann Marin Barquero    | Nicole Parra Valverde     | Stephanie Sandoval Camacho
  * I Semestre - 2025
  */
+
+CREATE TYPE ORDER_STATUS AS ENUM (
+    'pending',
+    'confirmed',
+    'preparing',
+    'ready',
+    'delivered',
+    'cancelled'
+);
+
 -- Create Users Table
 CREATE TABLE users (
     id SERIAL PRIMARY KEY,
@@ -53,7 +63,7 @@ CREATE TABLE orders (
     restaurant_id INT REFERENCES restaurants(id) ON DELETE CASCADE,
     menu_id INT REFERENCES menus(id) ON DELETE CASCADE,
     order_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    status VARCHAR(20) NOT NULL DEFAULT 'pending',
+    status ORDER_STATUS NOT NULL DEFAULT 'pending',
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
@@ -79,3 +89,18 @@ CREATE TABLE menu_items (
     product_id INT REFERENCES products(id),
     quantity INT DEFAULT 1
 );
+
+CREATE VIEW order_revenue AS
+SELECT 
+    o.id AS order_id,
+    o.order_time,
+    o.status,
+    p.name AS product_name,
+    p.category,
+    p.price,
+    mi.quantity,
+    (p.price * mi.quantity) AS line_total
+FROM orders o
+JOIN menu_items mi ON o.menu_id = mi.menu_id
+JOIN products p ON mi.product_id = p.id
+WHERE o.status IN ('delivered', 'cancelled');
