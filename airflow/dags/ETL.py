@@ -53,12 +53,11 @@ with DAG(
         python_callable=extract_reservations_to_csv
     )
 
-    # transform = SparkSubmitOperator(
-    #     task_id='transform_data',
-    #     application='/path/to/your/spark_script.py',
-    #     conn_id='spark_default',
-    #     application_args=['--input', 'source_table', '--output', 'transformed_table']
-    # )
+    transform = SparkSubmitOperator(
+        task_id='transform_data',
+        application='/opt/airflow/scripts/spark_transform.py',
+        conn_id='spark_default'
+    )
 
     # load = PostgresOperator(
     #     task_id='load_data',
@@ -68,4 +67,4 @@ with DAG(
     # )
 
 
-    start >> extract_users >> extract_restaurants >> extract_menus >> extract_products >> extract_orders >> extract_reservations >> end
+    start >> extract_users >> extract_restaurants >> extract_menus >> extract_products >> extract_orders >> extract_reservations >> transform >> end

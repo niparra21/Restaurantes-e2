@@ -381,16 +381,19 @@ services:
       - AIRFLOW__CORE__EXECUTOR=SequentialExecutor
       - AIRFLOW__CORE__FERNET_KEY=dpE2CnI5Yrw-g2CxwpKiDorWMj-bfvkiVsnOOetwyVg=
       - AIRFLOW__CORE__SQL_ALCHEMY_CONN=postgresql+psycopg2://airflow:airflow@airflow-db:5432/airflow
+      - JAVA_HOME=/usr/lib/jvm/java-17-openjdk-amd64
     volumes:
       - ./airflow/dags:/opt/airflow/dags
       - ./airflow/dags/data:/opt/airflow/dags/data
       - ./airflow/logs:/opt/airflow/logs
       - ./airflow/plugins:/opt/airflow/plugins
+      - ./airflow/scripts:/opt/airflow/scripts
     ports:
       - "8081:8080"
     networks:
       - backend-network
     command: webserver
+
 
   airflow-scheduler:
     build:
@@ -404,14 +407,17 @@ services:
       - AIRFLOW__CORE__EXECUTOR=SequentialExecutor
       - AIRFLOW__CORE__FERNET_KEY=dpE2CnI5Yrw-g2CxwpKiDorWMj-bfvkiVsnOOetwyVg=
       - AIRFLOW__CORE__SQL_ALCHEMY_CONN=postgresql+psycopg2://airflow:airflow@airflow-db:5432/airflow
+      - JAVA_HOME=/usr/lib/jvm/java-17-openjdk-amd64
     volumes:
       - ./airflow/dags:/opt/airflow/dags
       - ./airflow/dags/data:/opt/airflow/dags/data
       - ./airflow/logs:/opt/airflow/logs
       - ./airflow/plugins:/opt/airflow/plugins
+      - ./airflow/scripts:/opt/airflow/scripts
     networks:
       - backend-network
     command: scheduler
+   
 
   airflow-init:
     build:
@@ -425,11 +431,13 @@ services:
       - AIRFLOW__CORE__EXECUTOR=SequentialExecutor
       - AIRFLOW__CORE__FERNET_KEY=dpE2CnI5Yrw-g2CxwpKiDorWMj-bfvkiVsnOOetwyVg=
       - AIRFLOW__CORE__SQL_ALCHEMY_CONN=postgresql+psycopg2://airflow:airflow@airflow-db:5432/airflow
+      - JAVA_HOME=/usr/lib/jvm/java-17-openjdk-amd64
     volumes:
       - ./airflow/dags:/opt/airflow/dags
       - ./airflow/dags/data:/opt/airflow/dags/data
       - ./airflow/logs:/opt/airflow/logs
       - ./airflow/plugins:/opt/airflow/plugins
+      - ./airflow/scripts:/opt/airflow/scripts
     entrypoint: /bin/bash
     command:
       - -c
@@ -457,6 +465,7 @@ services:
       - SPARK_MASTER_HOST=${SPARK_MASTER_HOST}
       - SPARK_MASTER_PORT=${SPARK_MASTER_PORT}
       - SPARK_MASTER_WEBUI_PORT=${SPARK_MASTER_WEBUI_PORT}
+      - JAVA_HOME=/usr/lib/jvm/java-17-openjdk-amd64
     ports:
       - "${SPARK_WEBUI_EXPOSED_PORT:-8082}:${SPARK_MASTER_WEBUI_PORT}"
       - "${SPARK_MASTER_EXPOSED_PORT:-7077}:${SPARK_MASTER_PORT}"
@@ -466,6 +475,8 @@ services:
     volumes:
       - ./spark-apps:/opt/spark-apps
       - ./jars:/extra-jars
+      - ./airflow/scripts:/opt/airflow/scripts
+      - ./airflow/dags/data:/opt/airflow/dags/data
     env_file:
       - .env
     networks:
@@ -485,9 +496,12 @@ services:
     environment:
       - SPARK_WORKER_CORES=${SPARK_WORKER_CORES}
       - SPARK_WORKER_MEMORY=${SPARK_WORKER_MEMORY}
+      - JAVA_HOME=/usr/lib/jvm/java-17-openjdk-amd64
     volumes:
       - ./spark-apps:/opt/spark-apps
       - ./jars:/extra-jars
+      - ./airflow/scripts:/opt/airflow/scripts
+      - ./airflow/dags/data:/opt/airflow/dags/data
     env_file:
       - .env
     networks:
