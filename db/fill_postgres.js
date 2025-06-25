@@ -266,7 +266,8 @@ async function insertStaticProducts() {
     try {
       await pool.query(
         `INSERT INTO products (name, description, price, category, restaurant_id)
-         VALUES ($1, $2, $3, $4, $5)`,
+        VALUES ($1, $2, $3, $4, $5)
+        ON CONFLICT (name, restaurant_id) DO NOTHING`,
         [p.name, p.description, p.price, p.category, restaurant_id]
       );
       console.log(`✅ Producto '${p.name}' insertado en restaurante ${restaurant_id}`);
@@ -404,22 +405,21 @@ async function insertFakeOrders(count = 20) {
 
 async function main() {
   try {
-    // Esperar que PostgreSQL esté listo
     await waitForPostgres();
-    
-    // Crear tablas si no existen
     await createTables();
-    
-    await pool.query('DELETE FROM orders');
-    await pool.query('DELETE FROM reservations');
-    await pool.query('DELETE FROM menu_items');
-    await pool.query('DELETE FROM menus');
-    await pool.query('DELETE FROM products');
-    await pool.query('DELETE FROM restaurants');
-    await pool.query('DELETE FROM users');
 
+    // 🔄 Limpiar todo con reinicio de IDs
+    await pool.query(`TRUNCATE 
+      orders, 
+      reservations, 
+      menu_items, 
+      menus, 
+      products, 
+      restaurants, 
+      users 
+      RESTART IDENTITY CASCADE;
+    `);
 
-    // Insertar datos
     await insertFakeUsers(20);
     await insertFakeRestaurants(20);
     await insertStaticProducts();
@@ -427,7 +427,7 @@ async function main() {
     await insertFakeMenuItems(20);
     await insertFakeReservations(20);
     await insertFakeOrders(20);
-    
+
     console.log('🎉 ¡Datos insertados correctamente!');
   } catch (err) {
     console.error('🔥 Error general en la inserción:', err.message);
@@ -436,5 +436,6 @@ async function main() {
     console.log('🔌 Conexión a PostgreSQL cerrada');
   }
 }
+
 
 main();

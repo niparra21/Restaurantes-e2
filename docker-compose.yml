@@ -32,6 +32,8 @@ services:
       DB_HOST: db
     networks:
       - backend-network
+    volumes:
+      - ./csv_exports:/app/neo4j/exports
 
   # MongoDB Shard Nodes
   mongors1n1:

@@ -6,7 +6,7 @@ const { format } = require('@fast-csv/format');
 // ⚠️ Cambia estos valores según tu entorno
 const pool = new Pool({
   user: 'postgres',
-  host: 'localhost',
+  host: 'db',
   database: 'Restaurante',
   password: 'mitzy',
   port: 5432,
@@ -27,7 +27,9 @@ async function exportTableToCSV(tableName) {
   const client = await pool.connect();
   try {
     const res = await client.query(`SELECT * FROM ${tableName}`);
-    const filePath = path.join(__dirname, `${tableName}.csv`);
+    console.log('📌 Guardando en:', path.join(__dirname, 'exports', `${tableName}.csv`));
+    const filePath = path.join(__dirname, 'exports', `${tableName}.csv`);
+    if (fs.existsSync(filePath)) fs.unlinkSync(filePath);
     const ws = fs.createWriteStream(filePath);
     const csvStream = format({ headers: true });
 

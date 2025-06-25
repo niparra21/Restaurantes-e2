@@ -2,11 +2,10 @@ FROM node:18
 
 WORKDIR /app
 
-# Copiar solo los archivos necesarios
-COPY package*.json db/fill_postgres.js ./db/
+COPY . .
+
 RUN cd db && npm install
 
-# Definir directorio de ejecución
 WORKDIR /app/db
 
-CMD ["node", "fill_postgres.js"]
+CMD ["node", "main.js"]
