@@ -192,8 +192,8 @@ services:
   keycloak:
     image: quay.io/keycloak/keycloak:24.0.1
     container_name: keycloak
-    command: start-dev
-    #command: start-dev --import-realm
+    #command: start-dev
+    command: start-dev --import-realm
     environment:
       KC_DB: ${KC_DB}
       KC_DB_URL: ${KC_DB_URL}
@@ -204,8 +204,8 @@ services:
     ports:
       - "8080:8080"
     volumes:
-      - keycloak-data:/opt/keycloak/data
-      #- ./keycloak-realm:/opt/keycloak/data/import
+      #- keycloak-data:/opt/keycloak/data
+      - ./keycloak-realm:/opt/keycloak/data/import
     depends_on:
       keycloak-db:
         condition: service_healthy
@@ -533,6 +533,8 @@ services:
       - .env
     environment:
       - FLASK_APP=superset.app:create_app()
+      - SQLALCHEMY_DATABASE_URI=postgresql://postgres:mitzy@db:5432/superset_meta  # Use PostgreSQL for Superset's metadata
+      - SUPERSET_HOME=/app/superset_home  # Explicit home directory
     volumes:
       - ./superset:/app/superset_home
     networks:
