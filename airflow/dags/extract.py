@@ -19,7 +19,7 @@ def extract_restaurants_to_csv():
         user="postgres",     
         password="mitzy"    
     )
-    df = pd.read_sql("SELECT id as restaurant_id, name, address, city, phone FROM restaurants;", conn)
+    df = pd.read_sql("SELECT id as restaurant_id, name, address, phone, city FROM restaurants;", conn)
     df.to_csv('/opt/airflow/dags/data/restaurants.csv', index=False)
     conn.close()
 
@@ -30,7 +30,7 @@ def extract_menus_to_csv():
         user="postgres",     
         password="mitzy"    
     )
-    df = pd.read_sql("SELECT id as menu_id, restaurant_id, name, description FROM menus;", conn)
+    df = pd.read_sql("SELECT id as menu_id, name, description FROM menus;", conn)
     df.to_csv('/opt/airflow/dags/data/menus.csv', index=False)
     conn.close()
 
@@ -41,7 +41,7 @@ def extract_products_to_csv():
         user="postgres",     
         password="mitzy"    
     )
-    df = pd.read_sql("SELECT id as product_id, name, price, category, is_active FROM products;", conn)
+    df = pd.read_sql("SELECT id as product_id, name, category, is_active FROM products;", conn)
     df.to_csv('/opt/airflow/dags/data/products.csv', index=False)
     conn.close()
 
@@ -62,7 +62,7 @@ def extract_orders_to_csv():
             mi.quantity,
             o.order_time,
             o.status,
-            p.price as unidad_price
+            p.price as price
         FROM orders o
         JOIN menu_items mi ON o.menu_id = mi.menu_id
         JOIN products p ON p.id = mi.product_id;
