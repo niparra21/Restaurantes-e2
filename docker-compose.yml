@@ -20,6 +20,18 @@ services:
       interval: 5s
       timeout: 5s
       retries: 5
+    
+  fill-db:  # Nuevo servicio para tu script
+    build: 
+      context: .
+      dockerfile: Dockerfile.fill-db
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      DB_HOST: db
+    networks:
+      - backend-network
 
   # MongoDB Shard Nodes
   mongors1n1:
@@ -516,6 +528,41 @@ services:
         superset init && \
         /usr/bin/run-server.sh
       "
+  neo4j:
+      image: neo4j:5.20.0
+      container_name: neo4j
+      restart: unless-stopped
+      environment:
+        NEO4J_AUTH: neo4j/safepassword
+        NEO4J_PLUGINS: '["graph-data-science"]'
+        NEO4J_apoc_import_file_enabled: "true"
+        NEO4J_apoc_import_file_use_neo4j_config: "false"
+        NEO4J_dbms_security_procedures_unrestricted: "gds.,apoc."
+      ports:
+        - "7474:7474"  
+        - "7687:7687"  
+      volumes:
+        - ./data:/var/lib/neo4j/import  
+        - neo4j_data:/data
+      networks:
+        - backend-network
+    
+  grafos:
+      build:
+        context: .
+        dockerfile: Dockerfile.grafos
+      depends_on:
+        - neo4j
+      volumes:
+        - .:/app
+      working_dir: /app
+      environment:
+        - NEO4J_HOST=neo4j
+        - NEO4J_PORT=7687
+      command: ./wait-for-neo4j.sh
+      networks:
+        - backend-network
+
 
 # Configuración de volúmenes
 volumes:
@@ -535,6 +582,7 @@ volumes:
   hadoop_namenode:
   hadoop_datanode:
   airflow-db-data:
+  neo4j_data:
 
 # Configuración de red
 networks:

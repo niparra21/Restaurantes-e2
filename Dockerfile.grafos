@@ -1,0 +1,9 @@
+FROM python:3.10-slim
+
+WORKDIR /app
+
+RUN pip install --no-cache-dir neo4j
+
+COPY neo4j /app/neo4j
+
+CMD ["python", "neo4j/carga-grafos.py"]
