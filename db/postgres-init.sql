@@ -3,6 +3,8 @@
  * I Semestre - 2025
  */
 
+
+
 CREATE TYPE ORDER_STATUS AS ENUM (
     'pending',
     'confirmed',
@@ -13,7 +15,7 @@ CREATE TYPE ORDER_STATUS AS ENUM (
 );
 
 -- Create Users Table
-CREATE TABLE users (
+CREATE TABLE IF NOT EXISTS users (
     id SERIAL PRIMARY KEY,
     username VARCHAR(50) UNIQUE NOT NULL,
     password VARCHAR(255) NOT NULL,
@@ -25,7 +27,7 @@ CREATE TABLE users (
 );
 
 -- Create Restaurants Table
-CREATE TABLE restaurants (
+CREATE TABLE IF NOT EXISTS restaurants (
     id SERIAL PRIMARY KEY,
     name VARCHAR(255) NOT NULL,
     address VARCHAR(255) NOT NULL,
@@ -37,7 +39,7 @@ CREATE TABLE restaurants (
 );
 
 -- Create Menus Table
-CREATE TABLE menus (
+CREATE TABLE IF NOT EXISTS menus (
     id SERIAL PRIMARY KEY,
     restaurant_id INT REFERENCES restaurants(id) ON DELETE CASCADE,
     name VARCHAR(100) NOT NULL,
@@ -47,7 +49,7 @@ CREATE TABLE menus (
 );
 
 -- Create Reservations Table
-CREATE TABLE reservations (
+CREATE TABLE IF NOT EXISTS reservations (
     id SERIAL PRIMARY KEY,
     user_id INT REFERENCES users(id) ON DELETE CASCADE,
     restaurant_id INT REFERENCES restaurants(id) ON DELETE CASCADE,
@@ -57,7 +59,7 @@ CREATE TABLE reservations (
 );
 
 -- Create Orders Table
-CREATE TABLE orders (
+CREATE TABLE IF NOT EXISTS orders (
     id SERIAL PRIMARY KEY,
     user_id INT REFERENCES users(id) ON DELETE CASCADE,
     restaurant_id INT REFERENCES restaurants(id) ON DELETE CASCADE,
@@ -70,7 +72,7 @@ CREATE TABLE orders (
 
 
 -- Create Products Table
-CREATE TABLE products (
+CREATE TABLE IF NOT EXISTS products (
     id SERIAL PRIMARY KEY,
     name VARCHAR(100) NOT NULL,
     description TEXT,
@@ -83,7 +85,7 @@ CREATE TABLE products (
 );
 
 -- Create Menu Items Table
-CREATE TABLE menu_items (
+CREATE TABLE IF NOT EXISTS menu_items (
     id SERIAL PRIMARY KEY,
     menu_id INT REFERENCES menus(id) ON DELETE CASCADE,
     product_id INT REFERENCES products(id),

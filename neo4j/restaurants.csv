@@ -1,0 +1,3 @@
+id,name,address,phone,owner_id,created_at,updated_at
+3,Restaurante La Luna,"Calle 123, San José",8888-8888,9,Mon Mar 24 2025 20:18:32 GMT-0600 (hora estándar central),Mon Mar 24 2025 20:18:32 GMT-0600 (hora estándar central)
+5,Restaurante La Luna,"Calle 123, San José",8888-8888,9,Mon Mar 24 2025 21:55:31 GMT-0600 (hora estándar central),Mon Mar 24 2025 21:55:31 GMT-0600 (hora estándar central)
