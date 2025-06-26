@@ -1,0 +1,8 @@
+{
+  "name": "neo4j-carga",
+  "version": "1.0.0",
+  "main": "carga-grafos.js",
+  "dependencies": {
+    "neo4j-driver": "^5.20.0"
+  }
+}

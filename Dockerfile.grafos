@@ -1,9 +1,21 @@
-FROM python:3.10-slim
+FROM node:18
 
-WORKDIR /app
+WORKDIR /app/neo4j
 
-RUN pip install --no-cache-dir neo4j
+# Copiar dependencias
+COPY neo4j/package.json ./
 
-COPY neo4j /app/neo4j
+# Instalar dependencias
+RUN npm install
 
-CMD ["python", "neo4j/carga-grafos.py"]
+# Copiar el resto del código
+COPY neo4j ./
+
+# Instalar netcat para esperar a Neo4j
+RUN apt-get update && apt-get install -y netcat-openbsd && rm -rf /var/lib/apt/lists/*
+
+# Script para esperar a que esté listo Neo4j
+COPY wait-for-neo4j.sh /app/wait-for-neo4j.sh
+RUN chmod +x /app/wait-for-neo4j.sh
+
+CMD ["/app/wait-for-neo4j.sh"]

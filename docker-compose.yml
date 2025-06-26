@@ -21,19 +21,19 @@ services:
       timeout: 5s
       retries: 5
     
-#   fill-db:
-#     build: 
-#       context: .
-#       dockerfile: Dockerfile.fill-db
-#     depends_on:
-#       db:
-#         condition: service_healthy
-#     environment:
-#       DB_HOST: db
-#     networks:
-#       - backend-network
-#     volumes:
-#       - ./csv_exports:/app/neo4j/exports
+  fill-db:
+     build: 
+       context: .
+       dockerfile: Dockerfile.fill-db
+     depends_on:
+       db:
+         condition: service_healthy
+     environment:
+       DB_HOST: db
+     networks:
+       - backend-network
+     volumes:
+       - ./csv_exports:/app/neo4j/exports
 
   # MongoDB Shard Nodes
   mongors1n1:
@@ -567,26 +567,27 @@ services:
         - "7474:7474"  
         - "7687:7687"  
       volumes:
-        - ./data:/var/lib/neo4j/import  
+        - ./csv_exports:/var/lib/neo4j/import/csv_exports 
         - neo4j_data:/data
       networks:
         - backend-network
     
   grafos:
-      build:
-        context: .
-        dockerfile: Dockerfile.grafos
-      depends_on:
-        - neo4j
-      volumes:
-        - .:/app
-      working_dir: /app
-      environment:
-        - NEO4J_HOST=neo4j
-        - NEO4J_PORT=7687
-      command: ./wait-for-neo4j.sh
-      networks:
-        - backend-network
+    build:
+      context: .
+      dockerfile: Dockerfile.grafos
+    depends_on:
+      - neo4j
+    volumes:
+      - .:/app
+    working_dir: /app
+    environment:
+      - NEO4J_HOST=neo4j
+      - NEO4J_PORT=7687
+      - NEO4J_USER=neo4j
+      - NEO4J_PASSWORD=safepassword
+    networks:
+      - backend-network
 
 
 # Configuración de volúmenes
