@@ -12,6 +12,11 @@ from pyspark.sql import SparkSession
 from pyspark.sql.functions import col, count, desc, hour, sum, avg
 import os
 import argparse
+from pyspark.sql.functions import monotonically_increasing_id, to_date, date_format, date_format, lpad
+from pyspark.sql.functions import col, year, month, dayofmonth, date_format, quarter
+from pyspark.sql.types import IntegerType
+from datetime import datetime, timedelta
+from pyspark.sql import Row
 
 def init_spark():
     """Initializes a Spark session optimized for Airflow"""
@@ -59,7 +64,156 @@ def analyze_peak_hours(spark, input_dir, output_dir):
     
     peak_hours.write.mode("overwrite") \
         .parquet(f"{output_dir}/peak_hours")
+
+# -------------------------------------------------------------------------------
+def transform_dim_user(spark, input_dir, output_dir):
+    """Transforma users.csv al formato de dim_user para Hive."""
+    users = spark.read.csv(f"{input_dir}/users.csv", header=True, inferSchema=True)
+    # Opcional: selecciona y ordena columnas por si acaso
+    dim_user = users.select("user_id", "username", "email")
+    dim_user.write.mode("overwrite").parquet(f"{output_dir}/dim_user")
+
+# -------------------------------------------------------------------------------
+def transform_dim_restaurant(spark, input_dir, output_dir):
+    """Transforma restaurants.csv al formato de dim_restaurant para Hive."""
+    restaurants = spark.read.csv(f"{input_dir}/restaurants.csv", header=True, inferSchema=True)
+    dim_restaurant = restaurants.select(
+        "restaurant_id", "name", "address", "phone", "city"
+    )
+    dim_restaurant.write.mode("overwrite").parquet(f"{output_dir}/dim_restaurant")
+
+# -------------------------------------------------------------------------------
+def transform_dim_product(spark, input_dir, output_dir):
+    """Transforma products.csv al formato de dim_product para Hive."""
+    products = spark.read.csv(f"{input_dir}/products.csv", header=True, inferSchema=True)
+    dim_product = products.select(
+        "product_id", "name", "category", "is_active"
+    )
+    dim_product.write.mode("overwrite").parquet(f"{output_dir}/dim_product")
+
+# -------------------------------------------------------------------------------
+def transform_dim_menu(spark, input_dir, output_dir):
+    """Transforma menus.csv al formato de dim_menu para Hive."""
+    menus = spark.read.csv(f"{input_dir}/menus.csv", header=True, inferSchema=True)
+    dim_menu = menus.select("menu_id", "name", "description")
+    dim_menu.write.mode("overwrite").parquet(f"{output_dir}/dim_menu")
+
+# -------------------------------------------------------------------------------
+def transform_dim_date(spark, output_dir, start_date="2024-01-01", end_date="2025-12-31"):
+    """Genera la dimensión de fechas para el data warehouse."""
+    start = datetime.strptime(start_date, "%Y-%m-%d")
+    end = datetime.strptime(end_date, "%Y-%m-%d")
+    dates = [(start + timedelta(days=i)).strftime("%Y-%m-%d") for i in range((end-start).days+1)]
+    df = spark.createDataFrame(dates, "string").toDF("date_str")
+    df = df.withColumn("date", col("date_str").cast("date")) \
+           .withColumn("date_key", date_format(col("date"), "yyyyMMdd").cast(IntegerType())) \
+           .withColumn("year", year(col("date"))) \
+           .withColumn("month", month(col("date"))) \
+           .withColumn("day", dayofmonth(col("date"))) \
+           .withColumn("weekday", date_format(col("date"), "EEEE")) \
+           .withColumn("quarter", quarter(col("date"))) \
+           .select("date_key", "year", "month", "day", "weekday", "quarter")
+    df.write.mode("overwrite").parquet(f"{output_dir}/dim_date")
+
+
+# -- ---------------------------------------------------------------------------------
+def transform_dim_time(spark, output_dir):
+    """Genera la dimensión de tiempo para el data warehouse."""
+    times = []
+    for h in range(0, 24):
+        for m in range(0, 60):
+            time_key = int(f"{h:02d}{m:02d}")
+            times.append(Row(time_key=time_key, hour=h, minute=m))
+    df = spark.createDataFrame(times)
+    df.write.mode("overwrite").parquet(f"{output_dir}/dim_time")", "name", "description")
     
+
+# -------------------------------------------------------------------------------
+def transform_dim_status(spark, output_dir):
+    """Genera la dimensión de status para el data warehouse."""
+    data = [
+        ("delivered", "Order delivered to customer"),
+        ("pending", "Order pending"),
+        ("cancelled", "Order cancelled"),
+        # Agrega más estados si los tienes
+    ]
+    df = spark.createDataFrame(data, ["status", "description"])
+    df.write.mode("overwrite").parquet(f"{output_dir}/dim_status")
+
+# ---------------------------------------------------------------------------------
+def transform_fact_orders(spark, input_dir, output_dir):
+    """Transforma orders.csv al formato de fact_orders para Hive."""
+    orders = spark.read.csv(f"{input_dir}/orders.csv", header=True, inferSchema=True)
+
+    # Extraer order_date en formato INT (YYYYMMDD) desde order_time
+    orders = orders.withColumn(
+        "order_date",
+        date_format(to_date(col("order_time")), "yyyyMMdd").cast("int")
+    )
+
+    orders = orders.withColumn(
+        "order_time_int",
+        (lpad(date_format(col("order_time"), "HHmm"), 4, "0")).cast("int")
+    )
+
+    # Generar fact_order_id único
+    fact_orders = orders.withColumn(
+        "fact_order_id", monotonically_increasing_id()
+    ).select(
+        "fact_order_id",
+        "order_id",
+        "user_id",
+        "restaurant_id",
+        "menu_id",
+        "product_id",
+        "quantity",
+        col("order_time_int").alias("order_time"),
+        "status",
+        "price",
+        "order_date"
+    )
+
+    # Guardar particionando por order_date
+    fact_orders.write.mode("overwrite") \
+        .partitionBy("order_date") \
+        .parquet(f"{output_dir}/fact_orders")
+
+# ---------------------------------------------------------------------------------
+
+
+def transform_fact_reservations(spark, input_dir, output_dir):
+    """Transforma reservations.csv al formato de fact_reservations para Hive."""
+    reservations = spark.read.csv(f"{input_dir}/reservations.csv", header=True, inferSchema=True)
+
+    # Extraer reservation_date en formato INT (YYYYMMDD) desde reservation_time
+    reservations = reservations.withColumn(
+        "reservation_date",
+        date_format(to_date(col("reservation_time")), "yyyyMMdd").cast("int")
+    )
+
+    # Extraer reservation_time en formato INT (HHMM)
+    reservations = reservations.withColumn(
+        "reservation_time_int",
+        (lpad(date_format(col("reservation_time"), "HHmm"), 4, "0")).cast("int")
+    )
+
+    # Generar fact_reservation_id único
+    fact_reservations = reservations.withColumn(
+        "fact_reservation_id", monotonically_increasing_id()
+    ).select(
+        "fact_reservation_id",
+        "reservation_id",
+        "user_id",
+        "restaurant_id",
+        col("reservation_time_int").alias("reservation_time"),
+        "reservation_date"
+    )
+
+    # Guardar particionando por reservation_date
+    fact_reservations.write.mode("overwrite") \
+        .partitionBy("reservation_date") \
+        .parquet(f"{output_dir}/fact_reservations")
+
 # -------------------------------------------------------------------------------
 
 def main():
@@ -77,7 +231,16 @@ def main():
         # execute transformations
         analyze_top_products(spark, args.input_dir, args.output_dir)
         analyze_peak_hours(spark, args.input_dir, args.output_dir)
-        
+        transform_dim_user(spark, args.input_dir, args.output_dir)
+        transform_dim_restaurant(spark, args.input_dir, args.output_dir)    
+        transform_dim_product(spark, args.input_dir, args.output_dir)
+        transform_dim_menu(spark, args.input_dir, args.output_dir)
+        transform_dim_date(spark, args.output_dir)
+        transform_dim_time(spark, args.output_dir)
+        transform_dim_status(spark, args.output_dir)
+        transform_fact_orders(spark, args.input_dir, args.output_dir)
+        transform_fact_reservations(spark, args.input_dir, args.output_dir)
+
     finally:
         if spark:
             spark.stop()

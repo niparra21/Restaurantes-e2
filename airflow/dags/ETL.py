@@ -1,3 +1,9 @@
+# 
+#  Tecnologico de Costa Rica | IC-4302 Bases de Datos II | Escuela de Computacion
+#  Mariann Marin Barquero    | Nicole Parra Valverde     | Stephanie Sandoval Camacho
+#  I Semestre - 2025
+# 
+
 from airflow import DAG
 from airflow.providers.postgres.operators.postgres import PostgresOperator
 from airflow.providers.apache.spark.operators.spark_submit import SparkSubmitOperator
