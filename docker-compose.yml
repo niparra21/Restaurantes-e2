@@ -533,8 +533,8 @@ services:
       - .env
     environment:
       - FLASK_APP=superset.app:create_app()
-      - SQLALCHEMY_DATABASE_URI=postgresql://postgres:mitzy@db:5432/superset_meta  # Use PostgreSQL for Superset's metadata
-      - SUPERSET_HOME=/app/superset_home  # Explicit home directory
+      - SQLALCHEMY_DATABASE_URI=postgresql://postgres:mitzy@db:5432/superset_meta
+      - SUPERSET_HOME=/app/superset_home
     volumes:
       - ./superset:/app/superset_home
     networks:

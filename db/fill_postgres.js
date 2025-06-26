@@ -127,25 +127,7 @@ async function createTables() {
       );
     `);
 
-    // Crear vista
-    await pool.query(`
-      CREATE OR REPLACE VIEW order_revenue AS
-      SELECT 
-        o.id AS order_id,
-        o.order_time,
-        o.status,
-        p.name AS product_name,
-        p.category,
-        p.price,
-        mi.quantity,
-        (p.price * mi.quantity) AS line_total
-      FROM orders o
-      JOIN menu_items mi ON o.menu_id = mi.menu_id
-      JOIN products p ON mi.product_id = p.id
-      WHERE o.status IN ('delivered', 'cancelled');
-    `);
-
-    console.log('✅ Tablas y vistas creadas correctamente');
+    console.log('✅ Tablas creadas correctamente');
   } catch (err) {
     console.error('❌ Error creando tablas:', err.message);
     throw err;
