@@ -21,19 +21,19 @@ services:
       timeout: 5s
       retries: 5
     
-  fill-db:  # Nuevo servicio para tu script
-    build: 
-      context: .
-      dockerfile: Dockerfile.fill-db
-    depends_on:
-      db:
-        condition: service_healthy
-    environment:
-      DB_HOST: db
-    networks:
-      - backend-network
-    volumes:
-      - ./csv_exports:/app/neo4j/exports
+#   fill-db:
+#     build: 
+#       context: .
+#       dockerfile: Dockerfile.fill-db
+#     depends_on:
+#       db:
+#         condition: service_healthy
+#     environment:
+#       DB_HOST: db
+#     networks:
+#       - backend-network
+#     volumes:
+#       - ./csv_exports:/app/neo4j/exports
 
   # MongoDB Shard Nodes
   mongors1n1:
