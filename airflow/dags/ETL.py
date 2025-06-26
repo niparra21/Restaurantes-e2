@@ -55,8 +55,16 @@ with DAG(
 
     transform = SparkSubmitOperator(
         task_id='transform_data',
-        application='/opt/airflow/scripts/spark_transform.py',
-        conn_id='spark_default'
+        application='/opt/spark-apps/spark_analysis.py',
+        conn_id='spark_default',
+        application_args=[
+            '--input-dir', '/opt/airflow/dags/data',
+            '--output-dir', '/opt/airflow/dags/data/transformed'
+        ],
+        conf={
+            "spark.master": "spark://spark-master:7077",
+            "spark.submit.deployMode": "client"
+        },
     )
 
     # load = PostgresOperator(

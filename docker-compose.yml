@@ -389,6 +389,7 @@ services:
       dockerfile: Dockerfile
     image: custom-airflow:2.9.1
     container_name: airflow-webserver
+    user: "185:0"
     depends_on:
       - airflow-db
     environment:
@@ -396,12 +397,14 @@ services:
       - AIRFLOW__CORE__FERNET_KEY=dpE2CnI5Yrw-g2CxwpKiDorWMj-bfvkiVsnOOetwyVg=
       - AIRFLOW__CORE__SQL_ALCHEMY_CONN=postgresql+psycopg2://airflow:airflow@airflow-db:5432/airflow
       - JAVA_HOME=/usr/lib/jvm/java-17-openjdk-amd64
+      - AIRFLOW__SPARK__SPARK_MASTER_URL=spark://spark-master:7077
+      - AIRFLOW_CONN_SPARK_DEFAULT=spark://spark-master:7077
     volumes:
       - ./airflow/dags:/opt/airflow/dags
-      - ./airflow/dags/data:/opt/airflow/dags/data
+      - ./airflow/dags/data:/opt/airflow/dags/data:z
       - ./airflow/logs:/opt/airflow/logs
       - ./airflow/plugins:/opt/airflow/plugins
-      - ./airflow/scripts:/opt/airflow/scripts
+      - ./spark-apps:/opt/spark-apps
     ports:
       - "8081:8080"
     networks:
@@ -415,6 +418,7 @@ services:
       dockerfile: Dockerfile
     image: custom-airflow:2.9.1
     container_name: airflow-scheduler
+    user: "185:0"
     depends_on:
       - airflow-webserver
     environment:
@@ -422,12 +426,14 @@ services:
       - AIRFLOW__CORE__FERNET_KEY=dpE2CnI5Yrw-g2CxwpKiDorWMj-bfvkiVsnOOetwyVg=
       - AIRFLOW__CORE__SQL_ALCHEMY_CONN=postgresql+psycopg2://airflow:airflow@airflow-db:5432/airflow
       - JAVA_HOME=/usr/lib/jvm/java-17-openjdk-amd64
+      - AIRFLOW__SPARK__SPARK_MASTER_URL=spark://spark-master:7077
+      - AIRFLOW_CONN_SPARK_DEFAULT=spark://spark-master:7077
     volumes:
       - ./airflow/dags:/opt/airflow/dags
-      - ./airflow/dags/data:/opt/airflow/dags/data
+      - ./airflow/dags/data:/opt/airflow/dags/data:z
       - ./airflow/logs:/opt/airflow/logs
       - ./airflow/plugins:/opt/airflow/plugins
-      - ./airflow/scripts:/opt/airflow/scripts
+      - ./spark-apps:/opt/spark-apps
     networks:
       - backend-network
     command: scheduler
@@ -448,10 +454,9 @@ services:
       - JAVA_HOME=/usr/lib/jvm/java-17-openjdk-amd64
     volumes:
       - ./airflow/dags:/opt/airflow/dags
-      - ./airflow/dags/data:/opt/airflow/dags/data
+      - ./airflow/dags/data:/opt/airflow/dags/data:z
       - ./airflow/logs:/opt/airflow/logs
       - ./airflow/plugins:/opt/airflow/plugins
-      - ./airflow/scripts:/opt/airflow/scripts
     entrypoint: /bin/bash
     command:
       - -c
@@ -467,6 +472,7 @@ services:
       context: .
       dockerfile: Dockerfile.spark
     container_name: spark-master
+    user: "185:0"
     command: >
         bash -c "
         mkdir -p /opt/spark/jars &&
@@ -480,6 +486,7 @@ services:
       - SPARK_MASTER_PORT=${SPARK_MASTER_PORT}
       - SPARK_MASTER_WEBUI_PORT=${SPARK_MASTER_WEBUI_PORT}
       - JAVA_HOME=/usr/lib/jvm/java-17-openjdk-amd64
+      - HADOOP_SECURITY_AUTHENTICATION=simple
     ports:
       - "${SPARK_WEBUI_EXPOSED_PORT:-8082}:${SPARK_MASTER_WEBUI_PORT}"
       - "${SPARK_MASTER_EXPOSED_PORT:-7077}:${SPARK_MASTER_PORT}"
@@ -489,8 +496,7 @@ services:
     volumes:
       - ./spark-apps:/opt/spark-apps
       - ./jars:/extra-jars
-      - ./airflow/scripts:/opt/airflow/scripts
-      - ./airflow/dags/data:/opt/airflow/dags/data
+      - ./airflow/dags/data:/opt/airflow/dags/data:z
     env_file:
       - .env
     networks:
@@ -502,6 +508,7 @@ services:
       context: .
       dockerfile: Dockerfile.spark
     container_name: spark-worker
+    user: "185:0"
     command: >
       /opt/spark/bin/spark-class org.apache.spark.deploy.worker.Worker
       spark://${SPARK_MASTER_HOST}:${SPARK_MASTER_PORT}
@@ -511,11 +518,11 @@ services:
       - SPARK_WORKER_CORES=${SPARK_WORKER_CORES}
       - SPARK_WORKER_MEMORY=${SPARK_WORKER_MEMORY}
       - JAVA_HOME=/usr/lib/jvm/java-17-openjdk-amd64
+      - HADOOP_SECURITY_AUTHENTICATION=simple
     volumes:
       - ./spark-apps:/opt/spark-apps
       - ./jars:/extra-jars
-      - ./airflow/scripts:/opt/airflow/scripts
-      - ./airflow/dags/data:/opt/airflow/dags/data
+      - ./airflow/dags/data:/opt/airflow/dags/data:z
     env_file:
       - .env
     networks:
