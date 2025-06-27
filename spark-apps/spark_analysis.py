@@ -17,6 +17,7 @@ from pyspark.sql.functions import col, year, month, dayofmonth, date_format, qua
 from pyspark.sql.types import IntegerType
 from datetime import datetime, timedelta
 from pyspark.sql import Row
+from pyspark.sql.types import DecimalType
 
 def init_spark():
     """Initializes a Spark session optimized for Airflow"""
@@ -86,9 +87,9 @@ def transform_dim_restaurant(spark, input_dir, output_dir):
 def transform_dim_product(spark, input_dir, output_dir):
     """Transforma products.csv al formato de dim_product para Hive."""
     products = spark.read.csv(f"{input_dir}/products.csv", header=True, inferSchema=True)
-    dim_product = products.select(
-        "product_id", "name", "category", "is_active"
-    )
+    dim_product = products.withColumn(
+        "is_active", col("is_active").cast("boolean")
+    ).select("product_id", "name", "category", "is_active")
     dim_product.write.mode("overwrite").parquet(f"{output_dir}/dim_product")
 
 # -------------------------------------------------------------------------------
@@ -125,7 +126,7 @@ def transform_dim_time(spark, output_dir):
             time_key = int(f"{h:02d}{m:02d}")
             times.append(Row(time_key=time_key, hour=h, minute=m))
     df = spark.createDataFrame(times)
-    df.write.mode("overwrite").parquet(f"{output_dir}/dim_time")", "name", "description")
+    df.write.mode("overwrite").parquet(f"{output_dir}/dim_time")
     
 
 # -------------------------------------------------------------------------------
@@ -159,6 +160,8 @@ def transform_fact_orders(spark, input_dir, output_dir):
     # Generar fact_order_id único
     fact_orders = orders.withColumn(
         "fact_order_id", monotonically_increasing_id()
+    ).withColumn(
+        "price", col("price").cast(DecimalType(10, 2))
     ).select(
         "fact_order_id",
         "order_id",

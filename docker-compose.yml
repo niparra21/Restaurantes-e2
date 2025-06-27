@@ -346,6 +346,7 @@ services:
       - "5433:5432"
     volumes:
       - metastore_data:/var/lib/postgresql/data
+      - ./airflow/dags/data/transformed:/opt/airflow/dags/data/transformed
     networks:
       - backend-network
 
@@ -362,6 +363,7 @@ services:
       HIVE_METASTORE_DB_PASS: hive
     volumes:
       - ./hive/hive-site.xml:/opt/hive/conf/hive-site.xml
+      - ./airflow/dags/data/transformed:/opt/airflow/dags/data/transformed
     ports:
       - "10000:10000"
     depends_on:
