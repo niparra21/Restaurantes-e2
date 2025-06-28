@@ -322,8 +322,11 @@ class Neo4jLoader:
         # Crear algunas recomendaciones simuladas
         session.run("""
             MATCH (u1:User), (u2:User)
-            WHERE u1 <> u2 AND rand() < 0.15
+            WHERE u1 <> u2
+            WITH u1, u2, rand() AS randomValue
+            WHERE randomValue < 0.15
             WITH u1, u2
+            ORDER BY randomValue  // Orden aleatorio crucial
             LIMIT 20
             MERGE (u1)-[:RECOMMENDS]->(u2)
         """)
@@ -348,55 +351,74 @@ class Neo4jLoader:
         logger.info("📦 Órdenes marcadas como listas para entrega")
 
     def simulate_delivery_assignment(self, session):
-        """Simular asignación de rutas a repartidores (versión corregida)"""
-        # Paso 1: Asignar órdenes a repartidores - CORRECCIÓN
-        # Primero obtenemos todas las órdenes sin asignar
+        """Asignación mejorada: considerar todas las órdenes listas y agrupar por restaurante"""
+        # Paso 1: Obtener todas las órdenes listas para entrega, agrupadas por restaurante
         orders_query = """
-            MATCH (o:Order {status: 'ready_for_delivery'})
-            WHERE NOT EXISTS((o)-[:ASSIGNED_TO]->())
-            RETURN o.id AS order_id
+            MATCH (o:Order)
+            WHERE o.status IN ['ready_for_delivery', 'pending']  // ¡Corrección importante!
+            AND NOT EXISTS((o)-[:ASSIGNED_TO]->())
+            WITH o
+            MATCH (o)-[:FROM]->(r:Restaurant)
+            RETURN r.id AS restaurant_id, 
+                COLLECT(o.id) AS order_ids,
+                COUNT(o) AS order_count
+            ORDER BY order_count DESC
         """
-        orders = session.run(orders_query).data()
+        orders_grouped = session.run(orders_query).data()
         
-        # Obtenemos todos los repartidores
-        drivers_query = "MATCH (d:DeliveryPerson) RETURN d.id AS driver_id"
-        drivers = session.run(drivers_query).data()
+        drivers = session.run("MATCH (d:DeliveryPerson) RETURN d.id AS driver_id").data()
         
-        if not orders:
-            logger.info("✅ No hay órdenes pendientes de asignación")
-        else:
-            logger.info(f"📦 Órdenes a asignar: {len(orders)}")
+        if not orders_grouped:
+            logger.info("✅ No hay pedidos pendientes de asignación")
+            return
         
         if not drivers:
             logger.error("❌ No hay repartidores disponibles")
             return
         
-        # Asignamos cada orden a un repartidor aleatorio
         assigned_count = 0
-        for order in orders:
-            driver = random.choice(drivers)
-            assign_query = """
-                MATCH (o:Order {id: $order_id})
-                MATCH (d:DeliveryPerson {id: $driver_id})
-                MERGE (o)-[:ASSIGNED_TO]->(d)
-            """
-            session.run(assign_query, 
-                        order_id=order["order_id"],
-                        driver_id=driver["driver_id"])
-            assigned_count += 1
+        for group in orders_grouped:
+            restaurant_id = group['restaurant_id']
+            order_ids = group['order_ids']
+            
+            if not drivers:
+                logger.warning(f"⚠️ No hay repartidores para restaurante {restaurant_id}")
+                break
+                
+            driver = drivers.pop(0)
+            
+            # Asignar todos los pedidos del restaurante a este repartidor
+            for order_id in order_ids:
+                assign_query = """
+                    MATCH (o:Order {id: $order_id})
+                    MATCH (d:DeliveryPerson {id: $driver_id})
+                    MERGE (o)-[:ASSIGNED_TO]->(d)
+                """
+                session.run(assign_query, order_id=order_id, driver_id=driver['driver_id'])
+                assigned_count += 1
+            
+            logger.info(f"🚚 Repartidor {driver['driver_id']} asignado a restaurante {restaurant_id} ({len(order_ids)} pedidos)")
         
-        logger.info(f"🔗 Órdenes asignadas: {assigned_count}")
+        logger.info(f"🔗 Total de órdenes asignadas: {assigned_count}")
         
-        # Paso 2: Calcular y mostrar rutas optimizadas
+        # Paso 2: Calcular y guardar rutas optimizadas (mantener igual)
+        # ...
+        
+        # Paso 2: Calcular y guardar rutas optimizadas en Neo4J
         repartidores = session.run("MATCH (d:DeliveryPerson) RETURN d.id AS id").data()
         
         for rep in repartidores:
             repartidor_id = rep['id']
+            
+            # Obtener el restaurante asignado a este repartidor
             result = session.run("""
                 MATCH (d:DeliveryPerson {id: $id})<-[:ASSIGNED_TO]-(o:Order)
                 MATCH (o)-[:FROM]->(r:Restaurant)-[:LOCATED_AT]->(rest_loc)
-                MATCH (o)<-[:PLACED]-(u:User)-[:LIVES_AT]->(user_loc)  // Dirección corregida
-                RETURN rest_loc, COLLECT(DISTINCT user_loc) AS paradas
+                WITH rest_loc, d
+                LIMIT 1  // Solo necesitamos un restaurante
+                MATCH (d)<-[:ASSIGNED_TO]-(o2)
+                MATCH (o2)<-[:PLACED]-(u:User)-[:LIVES_AT]->(user_loc)
+                RETURN rest_loc, COLLECT(DISTINCT user_loc) AS paradas_clientes
             """, id=repartidor_id)
             
             if not result.peek():
@@ -405,24 +427,85 @@ class Neo4jLoader:
             
             record = result.single()
             rest_loc = record["rest_loc"]
-            paradas = record["paradas"]
+            paradas_clientes = record["paradas_clientes"]
+            
+            if not paradas_clientes:
+                logger.warning(f"⚠️ Repartidor {repartidor_id}: sin ubicaciones de clientes")
+                continue
             
             # Calcular ruta optimizada
-            ruta_optimizada = self.calcular_ruta_vecino_mas_cercano(rest_loc, paradas)
+            ruta_optimizada = self.calcular_ruta_vecino_mas_cercano(rest_loc, paradas_clientes)
             
-            # Mostrar resultados
-            logger.info(f"\n🚀 RUTA OPTIMIZADA PARA REPARTIDOR {repartidor_id}")
-            logger.info(f"📍 Restaurante: {rest_loc['address']} ({rest_loc['x']:.2f}, {rest_loc['y']:.2f})")
-            total_distancia = 0.0
+            # Guardar ruta en Neo4J
+            self.guardar_ruta_neo4j(session, repartidor_id, ruta_optimizada)
             
-            for i, punto in enumerate(ruta_optimizada[1:], start=1):
-                anterior = ruta_optimizada[i-1]
-                distancia = self.calcular_distancia(anterior, punto)
-                total_distancia += distancia
-                logger.info(f"  {i}. 📍 {punto['address']} ({punto['x']:.2f}, {punto['y']:.2f}) | Distancia: {distancia:.2f} km")
-            
-            logger.info(f"📏 Distancia total: {total_distancia:.2f} km")
-            logger.info(f"🛵 Tiempo estimado: {total_distancia * 3:.1f} minutos\n")
+            # Mostrar resultados en logs
+            self.mostrar_ruta_logs(repartidor_id, ruta_optimizada)
+
+    def guardar_ruta_neo4j(self, session, repartidor_id, ruta):
+        """Guardar ruta optimizada en la base de datos Neo4J (versión mejorada)"""
+        # Eliminar rutas anteriores para este repartidor
+        session.run("""
+            MATCH (r:Route {driver_id: $driver_id})
+            DETACH DELETE r
+        """, driver_id=repartidor_id)
+        
+        # Crear nodo de ruta
+        session.run("""
+            CREATE (ruta:Route {driver_id: $driver_id})
+            SET ruta.name = 'Ruta para Repartidor ' + $driver_id,
+                ruta.timestamp = datetime()
+        """, driver_id=repartidor_id)
+        
+        # Conectar puntos en orden
+        for i, punto in enumerate(ruta):
+            # Crear o actualizar nodo Location
+            session.run("""
+                MERGE (loc:Location {address: $address})
+                SET loc.x = $x,
+                    loc.y = $y,
+                    loc.order_in_route = $order
+                WITH loc
+                MATCH (ruta:Route {driver_id: $driver_id})
+                MERGE (ruta)-[:INCLUDES {point: $order}]->(loc)
+            """, address=punto['address'], 
+                x=punto['x'], 
+                y=punto['y'], 
+                order=i, 
+                driver_id=repartidor_id)
+        
+        # Conectar puntos secuencialmente
+        for i in range(1, len(ruta)):
+            session.run("""
+                MATCH (start:Location {address: $start_addr})
+                MATCH (end:Location {address: $end_addr})
+                MATCH (ruta:Route {driver_id: $driver_id})
+                
+                // Crear relación entre puntos consecutivos
+                MERGE (start)-[r:NEXT_IN_ROUTE]->(end)
+                SET r.driver_id = $driver_id,
+                    r.distance = point.distance(point({x: start.x, y: start.y}), 
+                                            point({x: end.x, y: end.y}))
+            """, start_addr=ruta[i-1]['address'], 
+                end_addr=ruta[i]['address'], 
+                driver_id=repartidor_id)
+        
+        logger.info(f"🗺️ Ruta guardada para repartidor {repartidor_id} con {len(ruta)} puntos")
+
+    def mostrar_ruta_logs(self, repartidor_id, ruta_optimizada):
+        """Mostrar ruta en los logs de la aplicación"""
+        logger.info(f"\n🚀 RUTA OPTIMIZADA PARA REPARTIDOR {repartidor_id}")
+        logger.info(f"📍 Restaurante: {ruta_optimizada[0]['address']} ({ruta_optimizada[0]['x']:.2f}, {ruta_optimizada[0]['y']:.2f})")
+        total_distancia = 0.0
+        
+        for i, punto in enumerate(ruta_optimizada[1:], start=1):
+            anterior = ruta_optimizada[i-1]
+            distancia = self.calcular_distancia(anterior, punto)
+            total_distancia += distancia
+            logger.info(f"  {i}. 📍 {punto['address']} ({punto['x']:.2f}, {punto['y']:.2f}) | Distancia: {distancia:.2f} km")
+        
+        logger.info(f"📏 Distancia total: {total_distancia:.2f} km")
+        logger.info(f"🛵 Tiempo estimado: {total_distancia * 3:.1f} minutos\n")
 
     def calcular_ruta_vecino_mas_cercano(self, inicio, paradas):
         """Calcular ruta usando algoritmo del vecino más cercano"""
