@@ -1,92 +1,21 @@
 restaurant_id,name,address,phone,city
-1,Locanda Toscana,Via San Gimignano 29,+390577940112,San Gimignano
-2,Tasca Veneta,Váci utca 52,+36919021629,Venice
-3,Cantina Bella,Kärntner Straße 26,+35651643073,Milan
-4,Gasthaus Classica,Kärntner Straße 7,+32397310872,Copenhagen
-5,Brasserie Bella,Karl Johans gate 15,+31255487572,Geneva
-6,Brasserie Mediterranea,Strada Maggiore 94,+37818204419,Marseille
-7,Pensione Bella,Váci utca 9,+34457506860,Brussels
-8,Bistro Elegante,Váci utca 1,+33540240774,Florence
-9,Trattoria Veneta,Karl Johans gate 99,+39460108393,Porto
-10,La Taverna del Mare,Via Roma 88,+38989092014,Berlin
-11,Tasca Antica,Rue Neuve 69,+37888266728,Amsterdam
-12,Maison Rustica,Rua Augusta 72,+34291249194,Copenhagen
-13,Osteria Antica,Rua Augusta 58,+39926506588,Barcelona
-14,Cantina Antica,Rua Augusta 79,+31734425553,Vienna
-15,Pensione Elegante,Karl Johans gate 99,+30797961340,Rome
-16,Locanda Alpina,Ringstraße 15,+34893071025,Salzburg
-17,Tasca Elegante,Váci utca 83,+31608516582,Oslo
-18,La Taverna Antica,Damrak 24,+32855554022,Zurich
-19,Trattoria Alpina,Karl Johans gate 63,+38684836797,Budapest
-20,Ristorante Bella,Via Roma 48,+30321074966,Copenhagen
-21,Albergo Moderna,Rue de Rivoli 92,+31955619263,Madrid
-22,Pensione Veneta,Boulevard Saint-Germain 15,+30299212370,Rome
-23,Ristorante Veneta,Rua Augusta 92,+32645992425,Brussels
-24,Trattoria Romana,Karl Johans gate 88,+32703358325,Bologna
-25,Cantina Antica,Váci utca 81,+38622583534,Munich
-26,Tasca Classica,Váci utca 77,+32176201786,Barcelona
-27,La Taverna Mediterranea,Gran Vía 74,+36781657283,Valencia
-28,Pensione Rustica,Gran Vía 49,+30989185881,Naples
-29,Trattoria Antica,Rue Neuve 76,+38366160222,Copenhagen
-30,La Taverna Moderna,Via Roma 50,+31753665654,Verona
-31,Bistro Bella,Strada Maggiore 82,+32935892451,Berlin
-32,Maison Mediterranea,Damrak 96,+39397111516,Berlin
-33,Albergo Alpina,Calle Mayor 31,+37265310872,Munich
-34,La Taverna Mediterranea,Kärntner Straße 55,+34735829906,Naples
-35,Locanda Rustica,Rue de Rivoli 62,+34844533493,Verona
-36,Tasca della Nonna,Boulevard Saint-Germain 81,+34875023026,Nice
-37,Ristorante Milano,Karl Johans gate 83,+35910867664,Oslo
-38,Locanda Veneta,Váci utca 80,+37653346093,Paris
-39,Gasthaus Elegante,Rua Augusta 35,+37163511855,Copenhagen
-40,Osteria del Mare,Ringstraße 70,+38545854347,Valencia
-41,Bistro del Mare,Damrak 8,+31600131903,Florence
-42,La Taverna Alpina,Via Roma 43,+33209661415,Verona
-43,Cantina Elegante,Boulevard Saint-Germain 15,+35659783429,Berlin
-44,La Taverna del Mare,Rue de Rivoli 13,+37515205309,Zurich
-45,Gasthaus Rustica,Váci utca 97,+33148061554,Venice
-46,Café della Nonna,Rua Augusta 2,+38254062892,Valencia
-47,Trattoria Classica,Via Roma 21,+351729403568,Florence
-48,Ristorante Alpina,Rue Neuve 44,+349872031245,Madrid
-49,Cantina Mediterranea,Strada Maggiore 12,+393211856374,Venice
-50,Osteria Rustica,Gran Vía 7,+349825967412,Barcelona
-51,La Taverna Bella,Boulevard Saint-Germain 33,+331462593872,Paris
-52,Maison Veneta,Karl Johans gate 48,+472934856712,Oslo
-53,Gasthaus Alpina,Ringstraße 29,+431590672398,Vienna
-54,Locanda Classica,Rua Augusta 77,+351289347561,Lisbon
-55,Tasca Mediterranea,Damrak 55,+312059837462,Amsterdam
-56,Pensione Elegante,Rua Augusta 45,+351296743852,Porto
-57,Brasserie della Nonna,Rue de Rivoli 29,+331475893206,Nice
-58,Trattoria Romana,Váci utca 17,+361234567890,Budapest
-59,Albergo Rustica,Karl Johans gate 31,+474568923471,Copenhagen
-60,Café Classica,Via Roma 58,+393209485760,Rome
-61,Osteria Alpina,Gran Vía 41,+349875634120,Madrid
-62,Bistro Mediterranea,Rue Neuve 21,+337123456789,Paris
-63,Locanda Bella,Rua Augusta 88,+351987654321,Lisbon
-64,Gasthaus Romana,Váci utca 50,+361987654321,Budapest
-65,Pensione Alpina,Ringstraße 18,+431987654321,Vienna
-66,Trattoria Mediterranea,Damrak 14,+312987654321,Amsterdam
-67,La Taverna Classica,Gran Vía 77,+349876543210,Madrid
-68,Osteria Bella,Karl Johans gate 59,+474123456789,Oslo
-69,Cantina Rustica,Via Roma 20,+393212345678,Rome
-70,Maison Mediterranea,Boulevard Saint-Germain 38,+331234567890,Paris
-71,Brasserie Alpina,Strada Maggiore 11,+393198765432,Venice
-72,Café della Nonna,Váci utca 44,+361234567891,Budapest
-73,Ristorante Classica,Rua Augusta 69,+351987654322,Lisbon
-74,Locanda Romana,Rue de Rivoli 7,+331987654322,Paris
-75,Tasca Bella,Gran Vía 31,+349876543211,Barcelona
-76,Albergo Mediterranea,Karl Johans gate 71,+474987654321,Oslo
-77,Trattoria Rustica,Damrak 77,+312345678902,Amsterdam
-78,Ristorante Veneta,Via Roma 14,+393456789012,Florence
-79,Cantina Alpina,Rue Neuve 33,+331234567893,Lyon
-80,Osteria Mediterranea,Gran Vía 56,+349876543210,Madrid
-81,La Taverna Classica,Rua Augusta 42,+351987654323,Porto
-82,Maison Bella,Karl Johans gate 23,+474123456782,Copenhagen
-83,Gasthaus della Nonna,Strada Maggiore 67,+393198765433,Venice
-84,Locanda Mediterranea,Váci utca 15,+361987654323,Budapest
-85,Bistro Romana,Boulevard Saint-Germain 12,+331234567894,Paris
-86,Pensione Alpina,Ringstraße 42,+431987654323,Salzburg
-87,Café Rustica,Via Roma 9,+393212345679,Rome
-88,Trattoria Bella,Gran Vía 85,+349876543212,Barcelona
-89,Albergo Classica,Rue de Rivoli 17,+331987654324,Nice
-90,Locanda Alpina,Karl Johans gate 56,+474987654322,Oslo
-91,Tasca Mediterranea,Váci utca 79,+361234567895,Vienna
+1,"Osinski, Ratke and Erdman",46822 Davis Ferry,1-212-225-5630,New Titochester
+2,Quigley - Nader,31940 Dewitt Knolls,662-501-5018 x54945,South Myrl
+3,Grady Inc,90723 Dale Street,620-389-8637 x424,Karlshire
+4,Treutel LLC,3093 Kamren Shoals,1-988-688-9373,West Zacharymouth
+5,"Satterfield, Larkin and Kunze",2042 Wellington Street,1-600-858-2114,Percivalshire
+6,"Little, Toy and Ullrich",605 Waverley Road,1-468-278-1280,Rockyville
+7,"Bergstrom, Beier and Paucek",664 Lula Keys,(558) 935-1366 x646,Port Maude
+8,VonRueden LLC,81546 Arno Ranch,744-764-3036,Rosannaborough
+9,Schamberger - Wintheiser,838 Donnelly Fort,226-932-6646,New Nicholauscester
+10,Beatty and Sons,10198 State Avenue,(208) 416-0971 x28725,Orland Park
+11,Grant and Sons,595 Oak Avenue,463-968-7962 x10458,Moreno Valley
+12,Osinski - Mraz,5625 Wilber Court,1-223-599-0439 x59224,North Lauderdale
+13,Langosh and Sons,8255 Abbey Gateway,1-570-506-1896 x595,Kuhiccester
+14,Dach - Sporer,19293 Marlon Ways,492.936.3358,Clifton
+15,Leffler - Homenick,57569 Shields Wells,(348) 439-7982,Arnaldoview
+16,Russel Inc,5827 Verdie Street,999-366-0609,South Veldaview
+17,Bode Inc,596 Ericka Landing,889.594.5611,Port Luellaborough
+18,Boyer and Sons,35498 Selina Squares,(848) 221-3405 x651,Kassulkeside
+19,Beahan LLC,73869 Zieme Terrace,482-890-6896 x2455,Gloverport
+20,"Ward, Nader and Altenwerth",4269 Dicki Coves,(398) 470-1923 x517,Micheleview

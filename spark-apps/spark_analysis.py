@@ -206,8 +206,7 @@ def transform_fact_orders(spark, input_dir, output_dir):
         "quantity",
         col("order_time_int").alias("order_time"),
         "status",
-        "price",
-        "order_date"
+        "price"
     )
 
     # Guardar particionando por order_date

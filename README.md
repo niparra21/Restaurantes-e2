@@ -290,7 +290,7 @@ Esto inicializa el esquema del metascore, crea las tablas internas necesarias pa
 4. Posterior a eso se ejecuta el siguiente comando (desde la raíz del proyecto):
 
 ``` bash
-docker cp db/star-schema.hql restaurantes-e2-hive-server-1:/tmp/star-schema.hql
+docker cp db/star-schema.hql hive-server:/tmp/star-schema.hql
 ```
 
 Este comando copia el archivo [Script de creación del datawarehouse](db/star-schema.hql) desde la máquina local al contenedor del hive-server
@@ -421,7 +421,8 @@ docker-compose up
 Esto puede ser muy pesado así que se puede levantar solo los necesarios de esta forma: 
 
 ``` bash
-docker-compose up db airflow-db airflow-webserver airflow-scheduler airflow-init
+docker-compose up db airflow-db airflow-webserver 
+airflow-scheduler airflow-init spark-master spark-worker
 ```
 
 2. Ejecutar el DAG de extracción

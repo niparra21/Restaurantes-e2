@@ -4,7 +4,7 @@ CREATE EXTERNAL TABLE IF NOT EXISTS dim_user (
   email STRING
 )
 STORED AS PARQUET
-LOCATION '/opt/airflow/dags/data/transformed/dim_user';
+LOCATION 'file:///opt/airflow/dags/data/transformed/dim_user';
 
 CREATE EXTERNAL TABLE IF NOT EXISTS dim_restaurant (
   restaurant_id INT,
@@ -14,7 +14,7 @@ CREATE EXTERNAL TABLE IF NOT EXISTS dim_restaurant (
   city STRING
 )
 STORED AS PARQUET
-LOCATION '/opt/airflow/dags/data/transformed/dim_restaurant';
+LOCATION 'file:///opt/airflow/dags/data/transformed/dim_restaurant';
 
 CREATE EXTERNAL TABLE IF NOT EXISTS dim_product (
   product_id INT,
@@ -23,7 +23,7 @@ CREATE EXTERNAL TABLE IF NOT EXISTS dim_product (
   is_active BOOLEAN
 )
 STORED AS PARQUET
-LOCATION '/opt/airflow/dags/data/transformed/dim_product';
+LOCATION 'file:///opt/airflow/dags/data/transformed/dim_product';
 
 CREATE EXTERNAL TABLE IF NOT EXISTS dim_menu (
   menu_id INT,
@@ -31,7 +31,7 @@ CREATE EXTERNAL TABLE IF NOT EXISTS dim_menu (
   description STRING
 )
 STORED AS PARQUET
-LOCATION '/opt/airflow/dags/data/transformed/dim_menu';
+LOCATION 'file:///opt/airflow/dags/data/transformed/dim_menu';
 
 CREATE EXTERNAL TABLE IF NOT EXISTS dim_date (
   date_key INT,
@@ -42,7 +42,7 @@ CREATE EXTERNAL TABLE IF NOT EXISTS dim_date (
   quarter INT
 )
 STORED AS PARQUET
-LOCATION '/opt/airflow/dags/data/transformed/dim_date';
+LOCATION 'file:///opt/airflow/dags/data/transformed/dim_date';
 
 CREATE EXTERNAL TABLE IF NOT EXISTS dim_time (
   time_key INT,
@@ -50,14 +50,14 @@ CREATE EXTERNAL TABLE IF NOT EXISTS dim_time (
   minute INT
 )
 STORED AS PARQUET
-LOCATION '/opt/airflow/dags/data/transformed/dim_time';
+LOCATION 'file:///opt/airflow/dags/data/transformed/dim_time';
 
 CREATE EXTERNAL TABLE IF NOT EXISTS dim_status (
   status STRING,
   description STRING
 )
 STORED AS PARQUET
-LOCATION '/opt/airflow/dags/data/transformed/dim_status';
+LOCATION 'file:///opt/airflow/dags/data/transformed/dim_status';
 
 -- Hechos
 
@@ -75,7 +75,7 @@ CREATE EXTERNAL TABLE IF NOT EXISTS fact_orders (
 )
 PARTITIONED BY (order_date INT)
 STORED AS PARQUET
-LOCATION '/opt/airflow/dags/data/transformed/fact_orders';
+LOCATION 'file:///opt/airflow/dags/data/transformed/fact_orders';
 
 CREATE EXTERNAL TABLE IF NOT EXISTS fact_reservations (
   fact_reservation_id BIGINT,
@@ -86,4 +86,4 @@ CREATE EXTERNAL TABLE IF NOT EXISTS fact_reservations (
 )
 PARTITIONED BY (reservation_date INT)
 STORED AS PARQUET
-LOCATION '/opt/airflow/dags/data/transformed/fact_reservations';
+LOCATION 'file:///opt/airflow/dags/data/transformed/fact_reservations';
