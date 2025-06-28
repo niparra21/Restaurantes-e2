@@ -257,7 +257,7 @@ El sistema de búsquedas se utiliza para realizar consultas complejas de los pro
 [Ejemplos de Uso](EXAMPLES.md)
 
 ## 🎥 Video
-Se incluye un video que muestra la funcionalidad del sistema en acción.
+Se incluye un video que muestra la funcionalidad del sistema en acción. Tanto en su primera etapa como en la segunda:
 
 [Video Demostrativo](https://drive.google.com/drive/folders/1D_IdkLbZQNpx5ySEPajmJff1t3Pw8g1x) 
 
@@ -274,7 +274,7 @@ docker-compose up --build
 2. 🐝 Ingresa al contenedor del Hive Server
 
 ``` bash
-docker exec -it restaurantes-e2-hive-server-1 bash
+docker exec -it hive-server bash
 ``` 
 
 3. Inicializa el esquema del metastore
@@ -292,8 +292,11 @@ Esto inicializa el esquema del metascore, crea las tablas internas necesarias pa
 ``` bash
 docker cp db/star-schema.hql hive-server:/tmp/star-schema.hql
 ```
+``` bash
+docker cp db/cubosOLAP.hql hive-server:/tmp/cubosOLAP.hql
+``` 
 
-Este comando copia el archivo [Script de creación del datawarehouse](db/star-schema.hql) desde la máquina local al contenedor del hive-server
+Este comando copia el archivo [Script de creación del datawarehouse](db/star-schema.hql) desde la máquina local al contenedor del hive-server y también los cubos olap
 
 5. 🚀 Inicia el servicio HiveServer2
 
@@ -327,9 +330,14 @@ Note que el 0 0.0.0.0:10000 está en estado LISTEN
 
 Dentro del contenedor de Hive Server:
 
+El siguiente es para las tablas del dw.
 ``` bash
 beeline -u jdbc:hive2://localhost:10000 -n hive -f /tmp/star-schema.hql
 ```
+Y este otro es para las vistas
+``` bash
+beeline -u jdbc:hive2://localhost:10000 -n hive -f /tmp/cubosOLAP.hql
+``` 
 
 8.  🔍 Verifica las tablas creadas
 
@@ -352,64 +360,30 @@ DESCRIBE fact_orders;
 Este muestra la estructura de una tabla, cambie `fact_orders` por la tabla que necesite observar
 
 
-## ---------
-# para rellenar la base
+## ------------------------------------------------------------------------------------------------------
+## 🗄️ Rellenar la Base de Datos
 
-dudo que esto se deba de poner en el readme pero aquí les va:
+1. Instalar dependencias
+Asegurarse de tener instalados los paquetes necesarios (ya incluidos en package.json), sino ejecutar:
 
-instalen esta cochinada: npm install pg @faker-js/faker **(creo que no es necesario para que ya con los package.json está creo)**
+``` bash
+npm install
+```
+2. Reiniciar el volumen de Postgres
+En caso de tener la estructura de la base de datos de postgres antigua, eliminar el volumen para empezar desde cero:
 
-luego borren el volumen de postgres porque cambiamos la estrcutura de la base y ocupamos que esté vacía para recrearla, así:
-
+``` bash
 docker volume rm restaurantes-e2_db-data
+```
+3. Cargar datos de ejemplo
+Una vez levantado los contenedores esperar a que el contenedor de Postgres esté listo y ejecutar:
 
-luego de eso hagan el docker-compose up --build como de costumbre
-
-se esperan a que el contenedor de restaurantes postgres esté ready para aceptar connections
-y le dan
-
+``` bash
 node db/fill_postgres.js
-
-deberia meterles los datos en la base. Y finnnnnn
-
-Bueno no, si quieren comprobar que están ahí los datos hacen:
-
-docker exec -it restaurantes-e2-db-1 psql -U postgres -d Restaurante
-
-y luego cualquiera de estas consultas sql normales a como las prefieran:
-
-SELECT * FROM users LIMIT 5;
-SELECT * FROM restaurants LIMIT 5;
-SELECT * FROM products LIMIT 5;
-SELECT * FROM menus LIMIT 5;
-SELECT * FROM menu_items LIMIT 5;
-SELECT * FROM reservations LIMIT 5;
-SELECT * FROM orders LIMIT 5;
-
-ahora sí, fin?
-
-## No, aún no
-
-con respecto al airflow, hay que super mega armarse de paciencia. Yo estuve haciendo primero lo siguiente:
-
-``` bash
-docker-compose build --no-cache
 ```
-y luego, a menos de que les haya salido errores XD
-
-``` bash
-docker-compose up
-```
-
-En una máquina como la mía tardó unos 23 minutos, incluso más para acceder a http://localhost:8081
-OJITO CON EL ENLACE, no es https://localhost:8081/ es SIN LA S (re loco chaval, estuve 37 años con problemas por eso)
-
-Quizá en sus compus sea más rápido :)
-
-Desde ese link pueden ingresar con admin, admin. Para la fecha en la que pongo esto no hay dags así que no van a ver nada jeje. Proximas actualizaciones aquí, en el diario de Manani cayendo en demencia.
 
 ## ----------------------------------------------------------------------------------
-## Configuración y ejecución del entorno ETL
+## 💨 Configuración de airflow y ejecución del entorno ETL
 
 (Airflow suele necesitar de 4GB, en caso de ser necesario configurar la RAM asignada a Docker-Desktop)
 
@@ -421,8 +395,7 @@ docker-compose up
 Esto puede ser muy pesado así que se puede levantar solo los necesarios de esta forma: 
 
 ``` bash
-docker-compose up db airflow-db airflow-webserver 
-airflow-scheduler airflow-init spark-master spark-worker
+docker-compose up db airflow-db airflow-webserver airflow-scheduler airflow-init spark-master spark-worker
 ```
 
 2. Ejecutar el DAG de extracción
@@ -433,4 +406,22 @@ airflow-scheduler airflow-init spark-master spark-worker
   * Se puede monitorear el progreso en la pestaña “Graph View” o “Tree View”
   * Una vez hayan terminado todas las tareas verificar la creación de los archivos en 
       [Data](airflow/dags/data/)
+  * Por último para la carga al datawarehouse hacer lo siguiente
 
+a. Para ingresar al contenedor del hive
+
+``` bash
+docker exec -it hive-server bash
+``` 
+b. Abre el cliente Beeline dentro del contenedor:
+
+``` bash
+beeline -u jdbc:hive2://localhost:10000 -n hive
+```
+c. Reparar las particiones en Hive
+Esto es necesario para que Hive reconozca las nuevas particiones creadas por Spark:
+
+``` sql
+MSCK REPAIR TABLE fact_orders;
+MSCK REPAIR TABLE fact_reservations;
+```

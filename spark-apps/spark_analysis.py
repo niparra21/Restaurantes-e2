@@ -18,6 +18,7 @@ from pyspark.sql.types import IntegerType
 from datetime import datetime, timedelta
 from pyspark.sql import Row
 from pyspark.sql.types import DecimalType
+from pyspark.sql.types import DoubleType
 from pyspark.sql.window import Window
 from pyspark.sql.functions import lag
 
@@ -160,6 +161,10 @@ def transform_dim_time(spark, output_dir):
             time_key = int(f"{h:02d}{m:02d}")
             times.append(Row(time_key=time_key, hour=h, minute=m))
     df = spark.createDataFrame(times)
+    # Castea explícitamente a IntegerType para compatibilidad con Hive
+    df = df.withColumn("time_key", col("time_key").cast("int")) \
+           .withColumn("hour", col("hour").cast("int")) \
+           .withColumn("minute", col("minute").cast("int"))
     df.write.mode("overwrite").parquet(f"{output_dir}/dim_time")
     
 
@@ -180,23 +185,21 @@ def transform_fact_orders(spark, input_dir, output_dir):
     """Transforma orders.csv al formato de fact_orders para Hive."""
     orders = spark.read.csv(f"{input_dir}/orders.csv", header=True, inferSchema=True)
 
-    # Extraer order_date en formato INT (YYYYMMDD) desde order_time
+    # Extraer order_date y order_time
     orders = orders.withColumn(
         "order_date",
         date_format(to_date(col("order_time")), "yyyyMMdd").cast("int")
-    )
-
-    orders = orders.withColumn(
+    ).withColumn(
         "order_time_int",
         (lpad(date_format(col("order_time"), "HHmm"), 4, "0")).cast("int")
-    )
-
-    # Generar fact_order_id único
-    fact_orders = orders.withColumn(
+    ).withColumn(
         "fact_order_id", monotonically_increasing_id()
     ).withColumn(
-        "price", col("price").cast(DecimalType(10, 2))
-    ).select(
+        "price", col("price").cast(DoubleType())
+    )
+
+    
+    fact_orders = orders.select(
         "fact_order_id",
         "order_id",
         "user_id",
@@ -206,11 +209,22 @@ def transform_fact_orders(spark, input_dir, output_dir):
         "quantity",
         col("order_time_int").alias("order_time"),
         "status",
-        "price"
+        "price",
+        col("order_date").alias("order_date")
     )
 
-    # Guardar particionando por order_date
+    # Escribir particionado
     fact_orders.write.mode("overwrite") \
+        .partitionBy("order_date") \
+        .parquet(f"{output_dir}/fact_orders")
+
+# -------------------------------------------------------------------------------
+def clean_fact_orders_partition(spark, output_dir):
+    """Reescribe los archivos de fact_orders sin la columna física 'order_date'."""
+    df = spark.read.parquet(f"{output_dir}/fact_orders")
+
+    
+    df.drop("order_date").write.mode("overwrite") \
         .partitionBy("order_date") \
         .parquet(f"{output_dir}/fact_orders")
 

@@ -3,6 +3,8 @@
 #  Mariann Marin Barquero    | Nicole Parra Valverde     | Stephanie Sandoval Camacho
 #  I Semestre - 2025
 # 
+# this code is an Airflow DAG that extracts data from a PostgreSQL database, 
+# transforms it using Apache Spark.
 
 from airflow import DAG
 from airflow.providers.postgres.operators.postgres import PostgresOperator
@@ -20,7 +22,7 @@ default_args = {
 with DAG(
     dag_id='etl_postgres_spark',
     default_args=default_args,
-    schedule_interval=None,
+    schedule_interval=None, ##Cambiar a '0 0 * * *' para ejecución diaria o '@hourly' para ejecución horaria
     catchup=False,
     description='ETL: Extrae de Postgres, transforma con Spark y carga al warehouse'
 ) as dag:
@@ -59,6 +61,7 @@ with DAG(
         python_callable=extract_reservations_to_csv
     )
 
+#Transformation with Spark -----------------------------------------------------------------
     transform = SparkSubmitOperator(
         task_id='transform_data',
         application='/opt/spark-apps/spark_analysis.py',
@@ -72,13 +75,5 @@ with DAG(
             "spark.submit.deployMode": "client"
         },
     )
-
-    # load = PostgresOperator(
-    #     task_id='load_data',
-    #     postgres_conn_id='postgres_default',
-    #     sql='INSERT INTO target_table SELECT * FROM transformed_table;',
-    #     autocommit=True
-    # )
-
 
     start >> extract_users >> extract_restaurants >> extract_menus >> extract_products >> extract_orders >> extract_reservations >> transform >> end

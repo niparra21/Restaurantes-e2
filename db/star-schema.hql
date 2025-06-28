@@ -71,7 +71,7 @@ CREATE EXTERNAL TABLE IF NOT EXISTS fact_orders (
   quantity INT,
   order_time INT,
   status STRING,
-  price DECIMAL(10,2)
+  price DOUBLE
 )
 PARTITIONED BY (order_date INT)
 STORED AS PARQUET

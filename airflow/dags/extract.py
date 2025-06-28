@@ -3,6 +3,8 @@
 #  Mariann Marin Barquero    | Nicole Parra Valverde     | Stephanie Sandoval Camacho
 #  I Semestre - 2025
 
+# this code extracts data from a PostgreSQL database and saves it to CSV files.
+
 import pandas as pd
 import psycopg2
 

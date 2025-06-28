@@ -500,3 +500,102 @@ Para los siguientes ejemplos, la base de datos se llenó con un par de productos
     "message": "▫️  Reindexación completada. 5 productos procesados."
 }
 ```
+
+## 🟧🟨🟩🟦🟪 Ejemplos de los cubos OLAP
+A continuación, se presentan algunos ejemplos de los cubos OLAP
+
+### cubo_ventas_tiempo: análisis por tiempo (año, mes, día).
+
+``` sql
+select * from cubo_ventas_tiempo;
+```
+**Respuesta:**
+
+| year | month | day | total_ventas |
+| ---- | ----- | --- | ------------- |
+| 2025 | 6     | 4   | 9.96          |
+| 2025 | 6     | 5   | 119.45        |
+
+
+### cubo_ventas_por_ciudad: análisis por ubicación (ciudad).
+
+``` sql
+select * from cubo_ventas_por_ciudad;
+```
+**Respuesta:**
+
+| city                | total_ventas |
+| ------------------- | ------------- |
+| Clifton             | 14.96         |
+| Gloverport          | 3.49          |
+| Karlshire           | 14.96         |
+| Kassulkeside        | 2.49          |
+| Micheleview         | 11.97         |
+| New Nicholauscester | 16.53         |
+| Percivalshire       | 27.09         |
+| Port Maude          | 3.99          |
+| Rockyville          | 23.97         |
+| Rosannaborough      | 2.49          |
+| South Veldaview     | 7.47          |
+
+### cubo_frecuencia_productos: frecuencia de uso/productos más vendidos.
+
+``` sql
+select * from cubo_frecuencia_productos;
+```
+
+**Respuesta:**
+
+| producto           | total\_vendidos |
+| ------------------ | --------------- |
+| Coca-Cola          | 12              |
+| Smoothie de Fresa  | 6               |
+| Agua de Horchata   | 6               |
+| Ensalada Mixta     | 4               |
+| Papas Fritas       | 3               |
+| Lasaña             | 3               |
+| Sushi Roll         | 2               |
+| Helado de Vainilla | 2               |
+| Sándwich de Jamón  | 1               |
+
+
+### cubo_ventas_por_categoria: análisis por tipo de producto (categoría).
+
+``` sql
+select * from cubo_ventas_categoria;
+```
+
+**Respuesta:**
+
+| category        | total\_ventas |
+| --------------- | ------------- |
+| Acompañamientos | 7.47          |
+| Bebidas         | 55.56         |
+| Comida rápida   | 3.49          |
+| Ensaladas       | 15.96         |
+| Italiana        | 23.97         |
+| Japonesa        | 17.98         |
+| Postres         | 4.98          |
+
+
+### cubo_pedidos_por_hora: análisis por hora del día (frecuencia temporal).
+
+``` sql
+select * from cubo_pedidos_por_hora;
+```
+**Respuesta:**
+
+| hour | total\_pedidos |
+| ---- | -------------- |
+| 3    | 2              |
+| 4    | 2              |
+| 7    | 3              |
+| 11   | 3              |
+| 13   | 1              |
+| 15   | 2              |
+| 17   | 2              |
+| 18   | 2              |
+| 20   | 1              |
+| 21   | 1              |
+| 23   | 1              |
+
