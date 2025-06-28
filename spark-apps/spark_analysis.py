@@ -18,6 +18,8 @@ from pyspark.sql.types import IntegerType
 from datetime import datetime, timedelta
 from pyspark.sql import Row
 from pyspark.sql.types import DecimalType
+from pyspark.sql.window import Window
+from pyspark.sql.functions import lag
 
 def init_spark():
     """Initializes a Spark session optimized for Airflow"""
@@ -65,6 +67,38 @@ def analyze_peak_hours(spark, input_dir, output_dir):
     
     peak_hours.write.mode("overwrite") \
         .parquet(f"{output_dir}/peak_hours")
+    
+def analyze_monthly_growth(spark, input_dir, output_dir):
+    """Analyzes monthly growth trends in orders (both count and revenue).
+       Saves results in Parquet format."""
+    
+    # Read orders data
+    orders = spark.read.csv(f"{input_dir}/orders.csv", header=True, inferSchema=True)
+    
+    # Create window specification for growth calculations
+    window_spec = Window.orderBy("order_month")
+    
+    # Calculate monthly metrics
+    monthly_growth = orders.withColumn("order_month", date_format(col("order_time"), "yyyy-MM")) \
+        .groupBy("order_month") \
+        .agg(
+            count("*").alias("total_orders"),
+            sum("quantity").alias("total_items"),
+            sum(col("price") * col("quantity")).alias("total_revenue")
+        ) \
+        .orderBy("order_month") \
+        .withColumn("order_count_growth", 
+                   (col("total_orders") - lag("total_orders", 1).over(window_spec))) \
+        .withColumn("revenue_growth", 
+                   (col("total_revenue") - lag("total_revenue", 1).over(window_spec))) \
+        .withColumn("order_count_growth_pct", 
+                   (col("order_count_growth") / lag("total_orders", 1).over(window_spec)) * 100) \
+        .withColumn("revenue_growth_pct", 
+                   (col("revenue_growth") / lag("total_revenue", 1).over(window_spec)) * 100)
+    
+    # Save results
+    monthly_growth.write.mode("overwrite") \
+        .parquet(f"{output_dir}/monthly_growth")
 
 # -------------------------------------------------------------------------------
 def transform_dim_user(spark, input_dir, output_dir):
@@ -234,6 +268,7 @@ def main():
         # execute transformations
         analyze_top_products(spark, args.input_dir, args.output_dir)
         analyze_peak_hours(spark, args.input_dir, args.output_dir)
+        analyze_monthly_growth(spark, args.input_dir, args.output_dir)
         transform_dim_user(spark, args.input_dir, args.output_dir)
         transform_dim_restaurant(spark, args.input_dir, args.output_dir)    
         transform_dim_product(spark, args.input_dir, args.output_dir)
