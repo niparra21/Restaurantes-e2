@@ -1,42 +1,274 @@
 product_id,name,category,is_active
-1,Hamburguesa Clásica,Comida rápida,True
-2,Papas Fritas,Acompañamientos,True
-3,Coca-Cola,Bebidas,True
-4,Pizza Margarita,Italiana,True
-5,Ensalada César,Ensaladas,True
-6,Jugo Natural de Naranja,Bebidas,True
-7,Taco al Pastor,Mexicana,True
-8,Quesadilla de Pollo,Mexicana,True
-9,Agua Mineral,Bebidas,True
-10,Sushi Roll,Japonesa,True
-11,Tempura de Camarón,Japonesa,True
-12,Ramen,Japonesa,True
-13,Pollo a la Parrilla,Parrilla,True
-14,Costillas BBQ,Parrilla,True
-15,Ensalada Mixta,Ensaladas,True
-16,Spaghetti Boloñesa,Italiana,True
-17,Lasaña,Italiana,True
-18,Pan de Ajo,Acompañamientos,True
-19,Nachos con Queso,Mexicana,True
-20,Guacamole,Mexicana,True
-21,Agua de Horchata,Bebidas,True
-22,Café Americano,Bebidas,True
-23,Té Helado,Bebidas,True
-24,Brownie,Postres,True
-25,Helado de Vainilla,Postres,True
-26,Flan,Postres,True
-27,Sopa Azteca,Mexicana,True
-28,Tostadas de Pollo,Mexicana,True
-29,Croissant,Panadería,True
-30,Bagel,Panadería,True
-31,Jugo de Manzana,Bebidas,True
-32,Sándwich de Jamón,Comida rápida,True
-33,Hot Dog,Comida rápida,True
-34,Empanada de Pollo,Panadería,True
-35,Muffin de Arándanos,Postres,True
-36,Ensalada de Frutas,Ensaladas,True
-37,Sopa de Pollo,Sopas,True
-38,Té Verde,Bebidas,True
-39,Smoothie de Fresa,Bebidas,True
-40,Pizza Pepperoni,Italiana,True
-41,Sopa Miso,Japonesa,True
+1,Bruschetta,Appetizer,True
+2,Spaghetti Carbonara,Main Course,True
+3,Tiramisu,Dessert,True
+4,Caprese Salad,Appetizer,True
+5,Risotto alla Milanese,Main Course,True
+6,Panna Cotta,Dessert,True
+7,Garlic Bread,Appetizer,True
+8,Lasagna,Main Course,True
+9,Gelato,Dessert,True
+10,Antipasto Misto,Appetizer,True
+11,Osso Buco,Main Course,True
+12,Cannoli,Dessert,True
+13,Focaccia,Appetizer,True
+14,Gnocchi al Pesto,Main Course,True
+15,Affogato,Dessert,True
+16,Arancini,Appetizer,True
+17,Saltimbocca,Main Course,True
+18,Zeppole,Dessert,True
+19,Insalata di Mare,Appetizer,True
+20,Tagliatelle al Ragù,Main Course,True
+21,Semifreddo,Dessert,True
+22,Minestrone Soup,Appetizer,True
+23,Risotto ai Funghi,Main Course,True
+24,Tartufo,Dessert,True
+25,Prosciutto e Melone,Appetizer,True
+26,Pollo alla Cacciatora,Main Course,True
+27,Budino,Dessert,True
+28,Calamari Fritti,Appetizer,True
+29,Bistecca alla Fiorentina,Main Course,True
+30,Cassata,Dessert,True
+31,Caponata,Appetizer,True
+32,Pasta al Pomodoro,Main Course,True
+33,Sfogliatella,Dessert,True
+34,Olives Marinati,Appetizer,True
+35,Fettuccine Alfredo,Main Course,True
+36,Gelato alla Stracciatella,Dessert,True
+37,Parmigiana di Melanzane,Appetizer,True
+38,Ravioli di Ricotta,Main Course,True
+39,Torta della Nonna,Dessert,True
+40,Carpaccio di Manzo,Appetizer,True
+41,Lasagna alla Bolognese,Main Course,True
+42,Panna Cotta ai Frutti di Bosco,Dessert,True
+43,Panzerotti,Appetizer,True
+44,Osso Buco alla Milanese,Main Course,True
+45,Cannoli Siciliani,Dessert,True
+46,Mozzarella in Carrozza,Appetizer,True
+47,Spaghetti alle Vongole,Main Course,True
+48,Tiramisu Classico,Dessert,True
+49,Zucchini Fritti,Appetizer,True
+50,Risotto al Nero di Seppia,Main Course,True
+51,Semifreddo al Limone,Dessert,True
+52,Frittata di Verdure,Appetizer,True
+53,Gnocchi al Pomodoro,Main Course,True
+54,Gelato al Pistacchio,Dessert,True
+55,Bruschetta al Pomodoro,Appetizer,True
+56,Polenta con Funghi,Main Course,True
+57,Panna Cotta Classica,Dessert,True
+58,Carciofi alla Romana,Appetizer,True
+59,Tagliatelle al Tartufo,Main Course,True
+60,Zabaglione,Dessert,True
+61,Supplì al Telefono,Appetizer,True
+62,Pappardelle al Cinghiale,Main Course,True
+63,Biscotti,Dessert,True
+64,Insalata Caprese,Appetizer,True
+65,Fettuccine alla Romana,Main Course,True
+66,Gelato al Cioccolato,Dessert,True
+67,Prosciutto e Formaggio,Appetizer,True
+68,Cannelloni Ripieni,Main Course,True
+69,Torta di Ricotta,Dessert,True
+70,Zuppa di Pomodoro,Appetizer,True
+71,Penne alla Arrabbiata,Main Course,True
+72,Gelato alla Fragola,Dessert,True
+73,Olive Ascolane,Appetizer,True
+74,Spaghetti alla Puttanesca,Main Course,True
+75,Tiramisu al Limone,Dessert,True
+76,Frittelle di Zucchini,Appetizer,True
+77,Risotto alla Zucca,Main Course,True
+78,Gelato al Caffè,Dessert,True
+79,Carpaccio di Tonno,Appetizer,True
+80,Gnocchi al Gorgonzola,Main Course,True
+81,Cannoli Siciliani,Dessert,True
+82,Polpette al Sugo,Appetizer,True
+83,Lasagna al Forno,Main Course,True
+84,Gelato al Limone,Dessert,True
+85,Parmigiana di Melanzane,Appetizer,True
+86,Risotto al Tartufo,Main Course,True
+87,Torta della Nonna,Dessert,True
+88,Insalata di Rucola,Appetizer,True
+89,Spaghetti Aglio e Olio,Main Course,True
+90,Panna Cotta alla Vaniglia,Dessert,True
+91,Crostini Toscani,Appetizer,True
+92,Tagliatelle al Salmone,Main Course,True
+93,Gelato al Pistacchio,Dessert,True
+94,Bruschetta al Pomodoro,Appetizer,True
+95,Fettuccine alla Bolognese,Main Course,True
+96,Tiramisu Classico,Dessert,True
+97,Antipasto di Mare,Appetizer,True
+98,Risotto ai Funghi,Main Course,True
+99,Cannoli Siciliani,Dessert,True
+100,Olive Marinate,Appetizer,True
+101,Lasagna Vegetariana,Main Course,True
+102,Gelato al Cioccolato,Dessert,True
+103,Frittata alle Verdure,Appetizer,True
+104,Gnocchi al Pomodoro,Main Course,True
+105,Torta della Nonna,Dessert,True
+106,Carpaccio di Manzo,Appetizer,True
+107,Spaghetti alla Carbonara,Main Course,True
+108,Panna Cotta ai Frutti di Bosco,Dessert,True
+109,Mozzarella Caprese,Appetizer,True
+110,Risotto alla Milanese,Main Course,True
+111,Gelato alla Fragola,Dessert,True
+112,Zuppa di Verdure,Appetizer,True
+113,Lasagna al Forno,Main Course,True
+114,Semifreddo al Limone,Dessert,True
+115,Polpette al Sugo,Appetizer,True
+116,Tagliatelle al Ragù,Main Course,True
+117,Tiramisu al Caffè,Dessert,True
+118,Bruschetta,Appetizer,True
+119,Spaghetti Aglio e Olio,Main Course,True
+120,Gelato alla Vaniglia,Dessert,True
+121,Insalata Mista,Appetizer,True
+122,Risotto al Tartufo,Main Course,True
+123,Cannoli Siciliani,Dessert,True
+124,Caponata,Appetizer,True
+125,Pasta alla Norma,Main Course,True
+126,Torta della Nonna,Dessert,True
+127,Frittura di Calamari,Appetizer,True
+128,Osso Buco,Main Course,True
+129,Panna Cotta,Dessert,True
+130,Garlic Bread,Appetizer,True
+131,Pasta al Pesto,Main Course,True
+132,Gelato al Cioccolato,Dessert,True
+133,Calamari Fritti,Appetizer,True
+134,Risotto ai Frutti di Mare,Main Course,True
+135,Tiramisu,Dessert,True
+136,Insalata di Mare,Appetizer,True
+137,Spaghetti alla Puttanesca,Main Course,True
+138,Gelato alla Fragola,Dessert,True
+139,Parmigiana di Melanzane,Appetizer,True
+140,Lasagna alla Bolognese,Main Course,True
+141,Cannoli Siciliani,Dessert,True
+142,Carciofi alla Romana,Appetizer,True
+143,Fettuccine Alfredo,Main Course,True
+144,Panna Cotta,Dessert,True
+145,Mozzarella in Carrozza,Appetizer,True
+146,Tagliatelle al Ragù,Main Course,True
+147,Torta della Nonna,Dessert,True
+148,Panzerotti,Appetizer,True
+149,Pollo alla Cacciatora,Main Course,True
+150,Gelato al Cioccolato,Dessert,True
+151,Supplì al Telefono,Appetizer,True
+152,Risotto alla Milanese,Main Course,True
+153,Tiramisu Classico,Dessert,True
+154,Insalata Caprese,Appetizer,True
+155,Gnocchi al Pesto,Main Course,True
+156,Cannoli Siciliani,Dessert,True
+157,Bruschetta,Appetizer,True
+158,Lasagna Vegetariana,Main Course,True
+159,Gelato al Pistacchio,Dessert,True
+160,Focaccia,Appetizer,True
+161,Spaghetti alla Carbonara,Main Course,True
+162,Panna Cotta,Dessert,True
+163,Antipasto Misto,Appetizer,True
+164,Tagliatelle al Salmone,Main Course,True
+165,Tiramisu,Dessert,True
+166,Carpaccio di Manzo,Appetizer,True
+167,Risotto ai Funghi,Main Course,True
+168,Cannoli,Dessert,True
+169,Mozzarella Caprese,Appetizer,True
+170,Spaghetti Aglio e Olio,Main Course,True
+171,Gelato alla Fragola,Dessert,True
+172,Zuppa di Verdure,Appetizer,True
+173,Lasagna al Forno,Main Course,True
+174,Semifreddo al Limone,Dessert,True
+175,Polpette al Sugo,Appetizer,True
+176,Tagliatelle al Ragù,Main Course,True
+177,Tiramisu al Caffè,Dessert,True
+178,Bruschetta,Appetizer,True
+179,Spaghetti Aglio e Olio,Main Course,True
+180,Gelato alla Vaniglia,Dessert,True
+181,Insalata Mista,Appetizer,True
+182,Risotto al Tartufo,Main Course,True
+183,Cannoli Siciliani,Dessert,True
+184,Caponata,Appetizer,True
+185,Pasta alla Norma,Main Course,True
+186,Torta della Nonna,Dessert,True
+187,Frittura di Calamari,Appetizer,True
+188,Osso Buco,Main Course,True
+189,Panna Cotta,Dessert,True
+190,Garlic Bread,Appetizer,True
+191,Pasta al Pesto,Main Course,True
+192,Gelato al Cioccolato,Dessert,True
+193,Calamari Fritti,Appetizer,True
+194,Risotto ai Frutti di Mare,Main Course,True
+195,Tiramisu,Dessert,True
+196,Insalata di Mare,Appetizer,True
+197,Spaghetti alla Puttanesca,Main Course,True
+198,Gelato alla Fragola,Dessert,True
+199,Parmigiana di Melanzane,Appetizer,True
+200,Lasagna alla Bolognese,Main Course,True
+201,Cannoli Siciliani,Dessert,True
+202,Carciofi alla Romana,Appetizer,True
+203,Fettuccine Alfredo,Main Course,True
+204,Panna Cotta,Dessert,True
+205,Mozzarella in Carrozza,Appetizer,True
+206,Tagliatelle al Ragù,Main Course,True
+207,Torta della Nonna,Dessert,True
+208,Panzerotti,Appetizer,True
+209,Pollo alla Cacciatora,Main Course,True
+210,Gelato al Cioccolato,Dessert,True
+211,Supplì al Telefono,Appetizer,True
+212,Risotto alla Milanese,Main Course,True
+213,Tiramisu Classico,Dessert,True
+214,Insalata Caprese,Appetizer,True
+215,Gnocchi al Pesto,Main Course,True
+216,Cannoli Siciliani,Dessert,True
+217,Bruschetta,Appetizer,True
+218,Lasagna Vegetariana,Main Course,True
+219,Gelato al Pistacchio,Dessert,True
+220,Focaccia,Appetizer,True
+221,Spaghetti alla Carbonara,Main Course,True
+222,Panna Cotta,Dessert,True
+223,Antipasto Misto,Appetizer,True
+224,Tagliatelle al Salmone,Main Course,True
+225,Tiramisu,Dessert,True
+226,Carpaccio di Manzo,Appetizer,True
+227,Risotto ai Funghi,Main Course,True
+228,Cannoli,Dessert,True
+229,Mozzarella Caprese,Appetizer,True
+230,Spaghetti Aglio e Olio,Main Course,True
+231,Gelato alla Fragola,Dessert,True
+232,Zuppa di Verdure,Appetizer,True
+233,Lasagna al Forno,Main Course,True
+234,Semifreddo al Limone,Dessert,True
+235,Polpette al Sugo,Appetizer,True
+236,Tagliatelle al Ragù,Main Course,True
+237,Tiramisu al Caffè,Dessert,True
+238,Bruschetta,Appetizer,True
+239,Spaghetti Aglio e Olio,Main Course,True
+240,Gelato alla Vaniglia,Dessert,True
+241,Insalata Mista,Appetizer,True
+242,Risotto al Tartufo,Main Course,True
+243,Cannoli Siciliani,Dessert,True
+244,Caponata,Appetizer,True
+245,Pasta alla Norma,Main Course,True
+246,Torta della Nonna,Dessert,True
+247,Frittura di Calamari,Appetizer,True
+248,Osso Buco,Main Course,True
+249,Panna Cotta,Dessert,True
+250,Garlic Bread,Appetizer,True
+251,Pasta al Pesto,Main Course,True
+252,Gelato al Cioccolato,Dessert,True
+253,Calamari Fritti,Appetizer,True
+254,Risotto ai Frutti di Mare,Main Course,True
+255,Tiramisu,Dessert,True
+256,Insalata di Mare,Appetizer,True
+257,Spaghetti alla Puttanesca,Main Course,True
+258,Gelato alla Fragola,Dessert,True
+259,Parmigiana di Melanzane,Appetizer,True
+260,Lasagna alla Bolognese,Main Course,True
+261,Cannoli Siciliani,Dessert,True
+262,Carciofi alla Romana,Appetizer,True
+263,Fettuccine Alfredo,Main Course,True
+264,Panna Cotta,Dessert,True
+265,Mozzarella in Carrozza,Appetizer,True
+266,Tagliatelle al Ragù,Main Course,True
+267,Torta della Nonna,Dessert,True
+268,Panzerotti,Appetizer,True
+269,Pollo alla Cacciatora,Main Course,True
+270,Gelato al Cioccolato,Dessert,True
+271,Supplì al Telefono,Appetizer,True
+272,Risotto alla Milanese,Main Course,True
+273,Tiramisu Classico,Dessert,True

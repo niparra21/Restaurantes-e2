@@ -1,21 +1,71 @@
 menu_id,name,description
-1,Chicken Parm,"A classic pie filled with delicious salmon and juicy watermelon, baked in a moist pastry crust and topped with a golden-brown lattice."
-2,Rabbit Steak,"Grilled salmon kebabs, marinated in Indonesian spices and served with a fresh sweet potato and plum salad."
-3,Bitter Soviet Stew,"Tender rabbit skewers, glazed with a sweet and tangy pomegranate sauce, served over a bed of fragrant jasmine rice."
-4,Poutine,"A succulent rabbit steak, encased in a salty celery crust, served with a side of anise mashed turnips."
-5,Chicken Parm,"Fresh soy sauce with a pinch of mango, topped by a caramelized berry with whipped cream"
-6,Avocado And Cavalo Tart,"A classic pie filled with delicious emu and zesty grapes, baked in a delicious pastry crust and topped with a golden-brown lattice."
-7,Pho,"Fresh soba with a pinch of dill, topped by a caramelized loquat with whipped cream"
-8,Pizza,"23-day aged pigeon steak, with choice of 2 sides."
-9,Avocado-glazed Pork Skewers,"Three snowpeas with fresh chillies, snowpea sprouts, pumpkin, squash and bonza. With a side of baked strawberry, and your choice of coriander seed or beef stock."
-10,Udupi Brown Rice Vinegar Soup,"Our savory rabbit, slow-cooked to perfection, accompanied by steamed onion and a rich, savory gravy."
-11,Salty Duck With Onion,"Fresh white rice with a pinch of annatto seed, topped by a caramelized bush tomato with whipped cream"
-12,Seafood Paella,"A slow-roasted Common Poorwill with a spicy, bitter exterior. Stuffed with papaya and covered in goji berry sauce. Sides with rhubarb puree and wild okra."
-13,Duck With Olive Sauce,"Our rich ostrich, slow-cooked to perfection, accompanied by steamed carrot and a rich, savory gravy."
-14,Sabryna's Special Pumpkin Seed,"Tenderly braised beef in a rich peppercorns and onion sauce, served with a side of creamy potatoes."
-15,Vanilla Beans-infused Goose,"A succulent crocodile steak, encased in a moist chervil crust, served with a side of orange zest mashed potatoes."
-16,Vanessa's Special Paprik,"Tenderly braised venison in a rich dill and chives sauce, served with a side of creamy bean sprouts."
-17,Grapefruit-infused Turkey Roast,"Tenderly braised crocodile in a rich peppercorns and parsnip sauce, served with a side of creamy garlic."
-18,Fig Pie,A special cyan mandarins from New Caledonia. To support the strong flavor it is sided with a tablespoon of sumac.
-19,Leeks Salad,"A succulent ostrich steak, encased in a golden zahtar crust, served with a side of french lavender mashed bok choy."
-20,Tacos,"Tender crocodile skewers, glazed with a sweet and tangy strawberry sauce, served over a bed of fragrant jasmine rice."
+1,Toscana Rustica,"Earthy flavors of the Tuscan countryside — wild boar ragù, panzanella, and hearty breads."
+2,Venetian Seafood Delights,"Fresh catches from the Venetian lagoon — calamari, clams, and saffron risotto."
+3,Roman Classics,"Traditional Roman dishes including carbonara, amatriciana, and saltimbocca."
+4,Sicilian Street Food,"Authentic Sicilian snacks and street eats — arancini, panelle, and cannoli."
+5,Alpine Alpine Feast,"Hearty mountain fare from the Italian Alps — polenta, game meats, and cheese platters."
+6,Piedmont Wine Pairing,"Elegant dishes paired with Piedmont’s finest wines — truffles, risottos, and aged cheeses."
+7,Napoli Pizza Bar,Classic Neapolitan pizzas baked in wood-fired ovens with fresh mozzarella and basil.
+8,Mediterranean Breeze,"Light and fresh Mediterranean dishes featuring olive oil, fresh herbs, and seafood."
+9,Tuscan Vineyard Dinner,"Seasonal Tuscan ingredients paired with local wines — ribollita, bistecca, and crostini."
+10,Liguria Coastal Bites,"Pesto, focaccia, and seafood from the Italian Riviera’s Liguria region."
+11,Emilian Pasta House,"Rich pasta dishes from Emilia-Romagna — tortellini, lasagna, and ragù."
+12,Campania Flavors,"Vibrant Campanian cuisine with fresh tomatoes, mozzarella di bufala, and seafood."
+13,Sardinian Traditions,"Rustic Sardinian dishes — suckling pig, pecorino cheese, and pane carasau."
+14,Florentine Grill,Steakhouse specializing in the Florentine bistecca and grilled vegetables.
+15,Roman Holiday,A selection of iconic Roman plates served in a cozy atmosphere.
+16,Dolce Vita Desserts,"Classic Italian desserts — tiramisu, panna cotta, and gelato."
+17,Italian Tapas,"Small plates inspired by Italian antipasti — bruschetta, olives, and cured meats."
+18,Classic Trattoria,Homestyle Italian cooking with a focus on comfort dishes and fresh ingredients.
+19,Veneto Vines & Dines,"Elegant dishes paired with Veneto’s famous wines — risotto, polenta, and seafood."
+20,Neapolitan Seafood Grill,"Fresh seafood grilled Neapolitan style with garlic, herbs, and lemon."
+21,Pasta Lovers Paradise,Wide variety of handmade pasta dishes with diverse sauces and fillings.
+22,Sicilian Sweet Shop,Traditional Sicilian sweets and pastries made fresh daily.
+23,Roman Street Eats,Casual dining featuring Roman street food classics like supplì and pizza bianca.
+24,Venetian Lagoon,Seafood-centric menu inspired by Venice’s lagoon and canals.
+25,Northern Italy Harvest,Seasonal dishes highlighting the produce and meats of Northern Italy.
+26,Tuscan Sunset,Romantic Tuscan cuisine with seasonal vegetables and robust red wines.
+27,Italian Coastal Fare,Seafood and fresh vegetables inspired by Italy’s long coastline.
+28,Florentine Farmhouse,Hearty farm-to-table dishes from the heart of Tuscany.
+29,Campania Classics,Traditional Campanian dishes with emphasis on tomato-based sauces and seafood.
+30,Roman Trattoria,Casual Roman dishes served family-style with fresh pasta and grilled meats.
+31,Piedmont Posh,"Upscale Piedmont cuisine featuring truffles, wild game, and fine cheeses."
+32,Sicilian Market,Fresh market ingredients turned into authentic Sicilian dishes.
+33,Venetian Canal,Elegant Venetian cuisine with emphasis on fresh seafood and risottos.
+34,Italian Harvest Table,Rustic dishes showcasing Italy’s seasonal bounty.
+35,Mediterranean Kitchen,"Fresh, light dishes with Mediterranean herbs, olive oil, and citrus."
+36,Napoli Pizzeria,Traditional Neapolitan pizza and classic Italian appetizers.
+37,Tuscan Hills,Rustic dishes inspired by the rolling hills of Tuscany and Chianti wines.
+38,Roman Pasta Bar,Wide variety of Roman pasta dishes with fresh ingredients.
+39,Sardinian Seaside,Seafood and traditional Sardinian specialties near the Mediterranean.
+40,Florence Garden,"Fresh, vegetable-forward dishes inspired by Tuscan gardens."
+41,Venetian Feast,Opulent Venetian dishes with rich sauces and fresh seafood.
+42,Italian Countryside,Comforting dishes inspired by the rural regions of Italy.
+43,Piedmont Gourmet,Fine dining experience focused on Piedmont’s signature ingredients.
+44,Naples Night,Casual Neapolitan dining with pizza and pasta specialties.
+45,Sicilian Spice,Bold and spicy Sicilian flavors with fresh seafood and herbs.
+46,Tuscan Picnic,"Light, fresh dishes perfect for a Tuscan outdoor meal."
+47,Veneto Rustic,Rustic dishes from the Veneto region featuring polenta and local meats.
+48,Roman Rustic,"Traditional rustic Roman dishes made with simple, fresh ingredients."
+49,Florentine Feast,Hearty meat dishes and robust wines from Florence.
+50,Mediterranean Breeze,Seafood and vegetable dishes inspired by the Mediterranean coast.
+51,Italian Antipasti,Variety of small Italian starters and finger foods.
+52,Venetian Delights,Seafood and pasta dishes from the Veneto region.
+53,Tuscan Traditions,Classic Tuscan recipes passed down through generations.
+54,Napoli Street Food,Casual street food from Naples with pizzas and fried treats.
+55,Piedmont Harvest,Seasonal dishes highlighting Piedmont’s produce and game.
+56,Roman Classics,Famous Roman dishes prepared with traditional recipes.
+57,Sicilian Coast,Fresh seafood and coastal Sicilian flavors.
+58,Florence Bistro,Cozy Tuscan bistro with seasonal menus.
+59,Italian Countryside Kitchen,Hearty dishes from rural Italy using local ingredients.
+60,Venetian Nights,Evening menu with Venetian specialties and fine wines.
+61,Tuscan Bites,Small plates inspired by Tuscan flavors and ingredients.
+62,Napoli Flavors,Authentic Naples dishes with fresh ingredients.
+63,Piedmont Plates,Dishes highlighting Piedmont’s rich culinary heritage.
+64,Roman Feast,Traditional feast menus featuring Roman classics.
+65,Sicilian Garden,Fresh herbs and vegetables in Sicilian style dishes.
+66,Florence Fine Dining,Elegant Tuscan dishes paired with regional wines.
+67,Mediterranean Tastes,"Light, fresh dishes inspired by Mediterranean cuisine."
+68,Venetian Waters,Seafood dishes inspired by Venice’s canals and lagoons.
+69,Tuscan Flame,Grilled meats and rustic dishes from Tuscany.
+70,Napoli Traditions,Traditional Naples recipes with a modern twist.

@@ -261,9 +261,7 @@ Se incluye un video que muestra la funcionalidad del sistema en acción. Tanto e
 
 [Video Demostrativo](https://drive.google.com/drive/folders/1D_IdkLbZQNpx5ySEPajmJff1t3Pw8g1x) 
 
-
-## ----------------------------------------------------------------------------------
-## 🗄️ Paso a Paso para Inicializar el Data Warehouse (Hive)
+## 🐝 Paso a Paso para Inicializar el Data Warehouse (Hive)
 
 1. Levanta todos los servicios. Desde la raíz del proyecto
 
@@ -271,7 +269,7 @@ Se incluye un video que muestra la funcionalidad del sistema en acción. Tanto e
 docker-compose up --build
 ``` 
 
-2. 🐝 Ingresa al contenedor del Hive Server
+2. Ingresa al contenedor del Hive Server
 
 ``` bash
 docker exec -it hive-server bash
@@ -298,7 +296,7 @@ docker cp db/cubosOLAP.hql hive-server:/tmp/cubosOLAP.hql
 
 Este comando copia el archivo [Script de creación del datawarehouse](db/star-schema.hql) desde la máquina local al contenedor del hive-server y también los cubos olap
 
-5. 🚀 Inicia el servicio HiveServer2
+5. Inicia el servicio HiveServer2
 
 Dentro del contenedor de Hive Server:
 
@@ -317,14 +315,16 @@ netstat -tulnp
 
 Debería devolverle algo así:
 
+```
 Active Internet connections (only servers)
 Proto Recv-Q Send-Q Local Address           Foreign Address         State       PID/Program name
 tcp        0      0 127.0.0.11:39917        0.0.0.0:*               LISTEN      -
 tcp        0      0 0.0.0.0:10002           0.0.0.0:*               LISTEN      226/java
 tcp        0      0 0.0.0.0:10000           0.0.0.0:*               LISTEN      226/java
 udp        0      0 127.0.0.11:33011        0.0.0.0:*                           -
+```
 
-Note que el 0 0.0.0.0:10000 está en estado LISTEN
+Note que el `0 0.0.0.0:10000` está en estado `LISTEN`
 
 7. Ejecuta el script para crear las tablas del data warehouse
 
@@ -339,7 +339,7 @@ Y este otro es para las vistas
 beeline -u jdbc:hive2://localhost:10000 -n hive -f /tmp/cubosOLAP.hql
 ``` 
 
-8.  🔍 Verifica las tablas creadas
+8.  Verifica las tablas creadas
 
 Abre el cliente Beeline dentro del contenedor:
 
@@ -359,8 +359,6 @@ DESCRIBE fact_orders;
 ```
 Este muestra la estructura de una tabla, cambie `fact_orders` por la tabla que necesite observar
 
-
-## ------------------------------------------------------------------------------------------------------
 ## 🗄️ Rellenar la Base de Datos
 
 1. Instalar dependencias
@@ -382,7 +380,6 @@ Una vez levantado los contenedores esperar a que el contenedor de Postgres esté
 node db/fill_postgres.js
 ```
 
-## ----------------------------------------------------------------------------------
 ## 💨 Configuración de airflow y ejecución del entorno ETL
 
 (Airflow suele necesitar de 4GB, en caso de ser necesario configurar la RAM asignada a Docker-Desktop)
@@ -400,10 +397,10 @@ docker-compose up db airflow-db airflow-webserver airflow-scheduler airflow-init
 
 2. Ejecutar el DAG de extracción
 
-  * Acceder a http://localhost:8081 con las credenciales (en este caso user 'admin', password 'admin')
+  * Acceder a `http://localhost:8081` con las credenciales (en este caso user `admin`, password `admin`)
   * Activar el DAG (toggle ON)
-  * Hacer clic en el botón de “play” (Trigger DAG) para ejecutarlo manualmente
-  * Se puede monitorear el progreso en la pestaña “Graph View” o “Tree View”
+  * Hacer clic en el botón de `play` (Trigger DAG) para ejecutarlo manualmente
+  * Se puede monitorear el progreso en la pestaña `Graph View` o `Tree View`
   * Una vez hayan terminado todas las tareas verificar la creación de los archivos en 
       [Data](airflow/dags/data/)
   * Por último para la carga al datawarehouse hacer lo siguiente
@@ -425,3 +422,18 @@ Esto es necesario para que Hive reconozca las nuevas particiones creadas por Spa
 MSCK REPAIR TABLE fact_orders;
 MSCK REPAIR TABLE fact_reservations;
 ```
+
+## 📊 Dashboards con Superset
+
+El sistema incluye **Apache Superset** para la visualización y análisis de datos a través de dashboards interactivos.
+
+- Se puede acceder a Superset desde el navegador en:  
+  [http://localhost:8082](http://localhost:8082)
+
+- Se ingresa con las credenciales configuradas (son `admin` / `admin`, esas se crean apenas levanta el contenedor).
+
+- **Importante:**  
+  El archivo `superset.db` contiene la configuración interna y los dashboards creados en Superset.  
+  **Si se altera ese archivo sin haber hecho uso de Superset, cabe la posibilidad de que el contenedor no levante**
+
+  En caso de que eso sucediera, el commit **feat: superset dashboards ready** tiene la versión más actualizada del superset.db. Entonces se puede reemplazar el archivo actual por ese y volver a levantar contenedores.
