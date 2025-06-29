@@ -14,17 +14,14 @@ logger = logging.getLogger(__name__)
 
 class Neo4jLoader:
     def __init__(self):
-        # Obtener valores directamente de las variables de entorno del sistema
         self.uri = os.getenv("NEO4J_URI", "bolt://neo4j:7687")
         self.user = os.getenv("NEO4J_USER", "neo4j")
         self.password = os.getenv("NEO4J_PASSWORD", "safepassword")
         self.csv_dir = os.getenv("CSV_DIR", "/app/csv_exports")
-        
         logger.info(f"Configuración: URI={self.uri}, User={self.user}, CSV_DIR={self.csv_dir}")
         self.driver = None
 
     def connect(self):
-        """Establecer conexión con Neo4j con reintentos"""
         max_retries = 10
         retry_delay = 5
         
@@ -39,10 +36,10 @@ class Neo4jLoader:
                 logger.info("✅ Conexión exitosa con Neo4j")
                 return True
             except Exception as e:
-                logger.warning(f"⚠️ Intento {attempt + 1}/{max_retries}: {str(e)}")
+                logger.warning(f" Intento {attempt + 1}/{max_retries}: {str(e)}")
                 time.sleep(retry_delay)
         
-        logger.error("❌ No se pudo conectar a Neo4j después de varios intentos")
+        logger.error(" No se pudo conectar a Neo4j después de varios intentos")
         return False
 
     def load_data(self):
@@ -62,25 +59,23 @@ class Neo4jLoader:
                 self.load_orders(session)
                 self.load_menu_items(session)
                 self.infer_order_contains_from_menu(session)
-                # Crear relaciones adicionales
                 self.create_relationships(session)
-                 # Crear repartidores y asignar rutas
                 self.create_delivery_persons(session, 5)
                 self.set_random_order_status(session)
                 self.simulate_delivery_assignment(session)
                 
-                logger.info("✅ Todos los datos cargados exitosamente")
+                logger.info(" Todos los datos cargados exitosamente")
                 return True
                 
             except Exception as e:
-                logger.error(f"❌ Error al cargar datos: {str(e)}")
+                logger.error(f" Error al cargar datos: {str(e)}")
                 return False
 
     def load_users(self, session):
         """Cargar datos de usuarios con ubicaciones geográficas"""
         path = os.path.join(self.csv_dir, "users.csv")
         if not os.path.exists(path):
-            logger.warning(f"⚠️ Archivo no encontrado: {path}")
+            logger.warning(f" Archivo no encontrado: {path}")
             return
 
         query = """
@@ -99,7 +94,6 @@ class Neo4jLoader:
         with open(path, encoding='utf-8') as f:
             reader = csv.DictReader(f)
             for row in reader:
-                # Generar dirección y coordenadas aleatorias
                 address = f"Calle {random.randint(1, 100)} # {random.randint(1, 100)}"
                 city = random.choice(["Ciudad A", "Ciudad B", "Ciudad C"])
                 x = round(random.uniform(-100, 100), 4)
@@ -115,13 +109,13 @@ class Neo4jLoader:
                     x=x,
                     y=y
                 )
-        logger.info(f"📊 Usuarios y ubicaciones cargados desde {path}")
+        logger.info(f" Usuarios y ubicaciones cargados desde {path}")
 
     def load_restaurants(self, session):
         """Cargar datos de restaurantes con ubicaciones geográficas"""
         path = os.path.join(self.csv_dir, "restaurants.csv")
         if not os.path.exists(path):
-            logger.warning(f"⚠️ Archivo no encontrado: {path}")
+            logger.warning(f" Archivo no encontrado: {path}")
             return
 
         query = """
@@ -139,7 +133,6 @@ class Neo4jLoader:
         with open(path, encoding='utf-8') as f:
             reader = csv.DictReader(f)
             for row in reader:
-                # Generar coordenadas aleatorias
                 x = round(random.uniform(-100, 100), 4)
                 y = round(random.uniform(-100, 100), 4)
                 
@@ -159,7 +152,7 @@ class Neo4jLoader:
         """Cargar datos de productos"""
         path = os.path.join(self.csv_dir, "products.csv")
         if not os.path.exists(path):
-            logger.warning(f"⚠️ Archivo no encontrado: {path}")
+            logger.warning(f" Archivo no encontrado: {path}")
             return
 
         query = """
@@ -182,13 +175,13 @@ class Neo4jLoader:
                     category=row["category"],
                     is_active=row["is_active"].lower() == "true"
                 )
-        logger.info(f"🛒 Productos cargados desde {path}")
+        logger.info(f" Productos cargados desde {path}")
 
     def load_orders(self, session):
         """Cargar datos de órdenes"""
         path = os.path.join(self.csv_dir, "orders.csv")
         if not os.path.exists(path):
-            logger.warning(f"⚠️ Archivo no encontrado: {path}")
+            logger.warning(f" Archivo no encontrado: {path}")
             return
 
         query = """
@@ -216,14 +209,14 @@ class Neo4jLoader:
                     restaurant_id=int(row["restaurant_id"]),
                     menu_id=int(row["menu_id"])
                 )
-        logger.info(f"📦 Órdenes cargadas y vinculadas a menú desde {path}")
+        logger.info(f" Órdenes cargadas y vinculadas a menú desde {path}")
 
 
     def load_menus(self, session):
         """Cargar menús"""
         path = os.path.join(self.csv_dir, "menus.csv")
         if not os.path.exists(path):
-            logger.warning(f"⚠️ Archivo no encontrado: {path}")
+            logger.warning(f" Archivo no encontrado: {path}")
             return
 
         query = """
@@ -245,7 +238,7 @@ class Neo4jLoader:
                     description=row["description"],
                     restaurant_id=int(row["restaurant_id"])
                 )
-        logger.info(f"📋 Menús cargados desde {path}")
+        logger.info(f" Menús cargados desde {path}")
 
 
 
@@ -253,7 +246,7 @@ class Neo4jLoader:
         """Cargar items del menú"""
         path = os.path.join(self.csv_dir, "menu_items.csv")
         if not os.path.exists(path):
-            logger.warning(f"⚠️ Archivo no encontrado: {path}")
+            logger.warning(f" Archivo no encontrado: {path}")
             return
 
         query = """
@@ -281,14 +274,14 @@ class Neo4jLoader:
         MERGE (o)-[:CONTAINS {quantity: inc.quantity}]->(p)
         """
         session.run(query)
-        logger.info("🔁 Relaciones CONTAINS inferidas desde los menús de cada orden")
+        logger.info(" Relaciones CONTAINS inferidas desde los menús de cada orden")
 
 
     def load_order_contains(self, session):
         """Crear relaciones CONTAINS desde órdenes hacia productos"""
         path = os.path.join(self.csv_dir, "menu_items.csv")
         if not os.path.exists(path):
-            logger.warning(f"⚠️ Archivo no encontrado: {path}")
+            logger.warning(f" Archivo no encontrado: {path}")
             return
 
         query = """
@@ -301,15 +294,14 @@ class Neo4jLoader:
             reader = csv.DictReader(f)
             for row in reader:
                 session.run(query,
-                            order_id=int(row["order_id"]),  # asegurarse que este campo esté en el CSV
+                            order_id=int(row["order_id"]),
                             product_id=int(row["product_id"]),
                             quantity=int(row["quantity"]))
-        logger.info(f"🔗 Relaciones CONTAINS creadas desde {path}")
+        logger.info(f" Relaciones CONTAINS creadas desde {path}")
 
 
     def create_relationships(self, session):
         """Crear relaciones adicionales"""
-        # Conectar ubicaciones
         session.run("""
             MATCH (l1:Location), (l2:Location)
             WHERE l1 <> l2 AND rand() < 0.3
@@ -317,20 +309,19 @@ class Neo4jLoader:
             SET r.distance = round(rand() * 10 + 1, 2),
                 r.time = toInteger(round(rand() * 30 + 5))
         """)
-        logger.info("🛣️ Conexiones entre ubicaciones creadas")
+        logger.info(" Conexiones entre ubicaciones creadas")
         
-        # Crear algunas recomendaciones simuladas
         session.run("""
             MATCH (u1:User), (u2:User)
             WHERE u1 <> u2
             WITH u1, u2, rand() AS randomValue
             WHERE randomValue < 0.15
             WITH u1, u2
-            ORDER BY randomValue  // Orden aleatorio crucial
+            ORDER BY randomValue 
             LIMIT 20
             MERGE (u1)-[:RECOMMENDS]->(u2)
         """)
-        logger.info("👍 Recomendaciones entre usuarios creadas")
+        logger.info(" Recomendaciones entre usuarios creadas")
 
     def create_delivery_persons(self, session, count):
         """Crear nodos para repartidores"""
@@ -339,23 +330,23 @@ class Neo4jLoader:
                 MERGE (d:DeliveryPerson {id: $id})
                 SET d.name = $name
             """, id=i, name=f"Repartidor {i}")
-        logger.info(f"🚚 Creados {count} repartidores")
+        logger.info(f" Creados {count} repartidores")
 
     def set_random_order_status(self, session):
         """Marcar órdenes aleatorias como listas para entrega"""
         session.run("""
             MATCH (o:Order)
-            WHERE rand() < 0.4  // 40% de las órdenes
+            WHERE rand() < 0.4  
             SET o.status = 'ready_for_delivery'
         """)
-        logger.info("📦 Órdenes marcadas como listas para entrega")
+        logger.info(" Órdenes marcadas como listas para entrega")
 
     def simulate_delivery_assignment(self, session):
         """Asignación mejorada: considerar todas las órdenes listas y agrupar por restaurante"""
         # Paso 1: Obtener todas las órdenes listas para entrega, agrupadas por restaurante
         orders_query = """
             MATCH (o:Order)
-            WHERE o.status IN ['ready_for_delivery', 'pending']  // ¡Corrección importante!
+            WHERE o.status IN ['ready_for_delivery', 'pending']
             AND NOT EXISTS((o)-[:ASSIGNED_TO]->())
             WITH o
             MATCH (o)-[:FROM]->(r:Restaurant)
@@ -369,11 +360,11 @@ class Neo4jLoader:
         drivers = session.run("MATCH (d:DeliveryPerson) RETURN d.id AS driver_id").data()
         
         if not orders_grouped:
-            logger.info("✅ No hay pedidos pendientes de asignación")
+            logger.info(" No hay pedidos pendientes de asignación")
             return
         
         if not drivers:
-            logger.error("❌ No hay repartidores disponibles")
+            logger.error(" No hay repartidores disponibles")
             return
         
         assigned_count = 0
@@ -382,7 +373,7 @@ class Neo4jLoader:
             order_ids = group['order_ids']
             
             if not drivers:
-                logger.warning(f"⚠️ No hay repartidores para restaurante {restaurant_id}")
+                logger.warning(f" No hay repartidores para restaurante {restaurant_id}")
                 break
                 
             driver = drivers.pop(0)
@@ -397,12 +388,9 @@ class Neo4jLoader:
                 session.run(assign_query, order_id=order_id, driver_id=driver['driver_id'])
                 assigned_count += 1
             
-            logger.info(f"🚚 Repartidor {driver['driver_id']} asignado a restaurante {restaurant_id} ({len(order_ids)} pedidos)")
+            logger.info(f" Repartidor {driver['driver_id']} asignado a restaurante {restaurant_id} ({len(order_ids)} pedidos)")
         
-        logger.info(f"🔗 Total de órdenes asignadas: {assigned_count}")
-        
-        # Paso 2: Calcular y guardar rutas optimizadas (mantener igual)
-        # ...
+        logger.info(f" Total de órdenes asignadas: {assigned_count}")
         
         # Paso 2: Calcular y guardar rutas optimizadas en Neo4J
         repartidores = session.run("MATCH (d:DeliveryPerson) RETURN d.id AS id").data()
@@ -422,7 +410,7 @@ class Neo4jLoader:
             """, id=repartidor_id)
             
             if not result.peek():
-                logger.info(f"🚴 Repartidor {repartidor_id} sin entregas asignadas")
+                logger.info(f" Repartidor {repartidor_id} sin entregas asignadas")
                 continue
             
             record = result.single()
@@ -430,7 +418,7 @@ class Neo4jLoader:
             paradas_clientes = record["paradas_clientes"]
             
             if not paradas_clientes:
-                logger.warning(f"⚠️ Repartidor {repartidor_id}: sin ubicaciones de clientes")
+                logger.warning(f" Repartidor {repartidor_id}: sin ubicaciones de clientes")
                 continue
             
             # Calcular ruta optimizada
@@ -490,22 +478,22 @@ class Neo4jLoader:
                 end_addr=ruta[i]['address'], 
                 driver_id=repartidor_id)
         
-        logger.info(f"🗺️ Ruta guardada para repartidor {repartidor_id} con {len(ruta)} puntos")
+        logger.info(f" Ruta guardada para repartidor {repartidor_id} con {len(ruta)} puntos")
 
     def mostrar_ruta_logs(self, repartidor_id, ruta_optimizada):
         """Mostrar ruta en los logs de la aplicación"""
-        logger.info(f"\n🚀 RUTA OPTIMIZADA PARA REPARTIDOR {repartidor_id}")
-        logger.info(f"📍 Restaurante: {ruta_optimizada[0]['address']} ({ruta_optimizada[0]['x']:.2f}, {ruta_optimizada[0]['y']:.2f})")
+        logger.info(f"\n RUTA OPTIMIZADA PARA REPARTIDOR {repartidor_id}")
+        logger.info(f" Restaurante: {ruta_optimizada[0]['address']} ({ruta_optimizada[0]['x']:.2f}, {ruta_optimizada[0]['y']:.2f})")
         total_distancia = 0.0
         
         for i, punto in enumerate(ruta_optimizada[1:], start=1):
             anterior = ruta_optimizada[i-1]
             distancia = self.calcular_distancia(anterior, punto)
             total_distancia += distancia
-            logger.info(f"  {i}. 📍 {punto['address']} ({punto['x']:.2f}, {punto['y']:.2f}) | Distancia: {distancia:.2f} km")
+            logger.info(f"  {i}.  {punto['address']} ({punto['x']:.2f}, {punto['y']:.2f}) | Distancia: {distancia:.2f} km")
         
-        logger.info(f"📏 Distancia total: {total_distancia:.2f} km")
-        logger.info(f"🛵 Tiempo estimado: {total_distancia * 3:.1f} minutos\n")
+        logger.info(f" Distancia total: {total_distancia:.2f} km")
+        logger.info(f" Tiempo estimado: {total_distancia * 3:.1f} minutos\n")
 
     def calcular_ruta_vecino_mas_cercano(self, inicio, paradas):
         """Calcular ruta usando algoritmo del vecino más cercano"""
@@ -535,7 +523,7 @@ class Neo4jLoader:
 if __name__ == "__main__":
     loader = Neo4jLoader()
     if loader.load_data():
-        logger.info("🚀 Carga de datos completada exitosamente")
+        logger.info(" Carga de datos completada exitosamente")
     else:
-        logger.error("💥 Error en la carga de datos")
+        logger.error(" Error en la carga de datos")
         exit(1)
